@@ -1,0 +1,104 @@
+[
+  {
+    "chunk_id": "kb_sg_001",
+    "metadata": {
+      "disease_type": "T2_Diabetes",
+      "target_drug": "Metformin",
+      "category": "mechanism_of_action",
+      "source": "MOH Clinical Practice Guidelines (CPG)"
+    },
+    "content": "二甲双胍是治疗2型糖尿病的首选基础药物。它就像是给身体的细胞开了一扇门，增加身体对自身胰岛素的敏感性，让血液中的糖分更容易被细胞吸收利用。单独用它时极少会引起低血糖，是安全度非常高的一线用药。"
+  },
+  {
+    "chunk_id": "kb_sg_002",
+    "metadata": {
+      "disease_type": "T2_Diabetes",
+      "target_drug": "Metformin",
+      "category": "side_effect_management",
+      "source": "HealthHub SG"
+    },
+    "content": "刚开始服用二甲双胍的头一两周，大概有三分之一的人会觉得肚子不舒服，比如恶心、胀气、拉肚子或者嘴里有点金属味。别担心，这是正常的适应过程。建议您务必【随餐或者饭后马上吃】，这样能大大减轻胃肠道的反应。几天后身体适应了就会好转的。"
+  },
+  {
+    "chunk_id": "kb_sg_003",
+    "metadata": {
+      "disease_type": "T2_Diabetes",
+      "target_drug": "Metformin",
+      "category": "lifestyle_planning",
+      "source": "ActiveSG / Health Promotion Board",
+      "action": "generate_7_day_plan"
+    },
+    "content": "控糖是一场配合战。您可以去附近的Hawker Centre时点少饭、少加gravy（肉汁/汤汁）。每周争取在组屋楼下或ActiveSG场馆做点快走或游泳。既然您提到了，我们可以为您【生成一份专属的7天低GI饮食与运动打卡计划】，帮助您更好地控制血糖。"
+  },
+  {
+    "chunk_id": "kb_sg_004",
+    "metadata": {
+      "disease_type": "Hypertension",
+      "target_drug": "Amlodipine",
+      "category": "mechanism_of_action",
+      "source": "HealthHub SG Patient Education"
+    },
+    "content": "氨氯地平是非常经典的降压药。它的作用就像是放松了我们紧绷的血管壁，让血管扩宽。管道宽了，水流（血液）对管壁的压力自然就小了。它药效很稳定，每天吃一次就能平稳控制全天的血压。"
+  },
+  {
+    "chunk_id": "kb_sg_005",
+    "metadata": {
+      "disease_type": "Hypertension",
+      "target_drug": "Amlodipine",
+      "category": "side_effect_management",
+      "source": "MOH CPG"
+    },
+    "content": "刚开始吃氨氯地平，因为小血管突然扩张，可能会觉得面部微红、发热，或者轻微头痛。久站或久坐后，可能会发现脚踝和小腿微水肿。这些大多数是暂时良性的，晚间休息时稍把脚垫高就能缓解。"
+  },
+  {
+    "chunk_id": "kb_sg_006",
+    "metadata": {
+      "disease_type": "General_Chronic",
+      "target_drug": "Any",
+      "category": "medication_adherence",
+      "source": "Synapxe HealthTech Tools",
+      "action": "schedule_tomorrow_reminder"
+    },
+    "content": "一忙起来就容易忘吃药，这很常见啦。但慢性病药物经常漏服会让血压或血糖大幅度波动，很伤身体。我们可以直接调用后台API，帮您【安排明日的服药闹钟与语音提醒】，每天到了点自动提示，帮您慢慢养成好习惯！"
+  },
+  {
+    "chunk_id": "kb_sg_007",
+    "metadata": {
+      "disease_type": "Hyperlipidemia",
+      "target_drug": "Atorvastatin",
+      "category": "warnings",
+      "source": "HSA Safety Alerts"
+    },
+    "content": "阿托伐他汀不仅能降血脂，还能把血管里的脂质斑块稳定住，是“血管清道夫”。但这有个绝对的生活禁忌：服药期间【千万不要大量喝西柚汁】（Grapefruit juice）。西柚会严重阻碍药物排泄，让药效在体内叠加，极易引起严重的肌肉酸软和肝功能问题。"
+  },
+  {
+    "chunk_id": "kb_sg_008",
+    "metadata": {
+      "disease_type": "General_Chronic",
+      "category": "emotional_support",
+      "emotion_target": "anxious",
+      "source": "SG Mental Health Helpline / Psychology"
+    },
+    "content": "看着手里好几种药盒，听着确诊的结果，您现在一定觉得不知所措、心里发慌对吧？这是非常正常的震惊和抗拒情绪。请先深呼吸。这些药不是猛兽，它们是非常成熟且获HSA验证安全的“健康保镖”。我们把生病当做身体的一个信号，提醒我们要好好爱护自己了。诊所医生和系统护士会陪您度过这段磨合期的，别怕。"
+  },
+  {
+    "chunk_id": "kb_sg_009",
+    "metadata": {
+      "disease_type": "General_Chronic",
+      "category": "emotional_support",
+      "emotion_target": "frustrated",
+      "source": "SG Mental Health Helpline / Psychology"
+    },
+    "content": "我已经那么努力地忌口、乖乖吃药了，为什么指标还是不降反升？好气馁！听到这儿，我非常能共情您的挫败感。请相信这绝不怪您！人体不是机器，最近的睡眠、工作压力、坡岛炎热天气改变导致的脱水都会影响指标。您前期的努力绝对没有白费！咱们先把沮丧缓一缓，接下来回诊时让医生微调一下方案，肯定能好转的。"
+  },
+  {
+    "chunk_id": "kb_sg_010",
+    "metadata": {
+      "disease_type": "CVD",
+      "target_drug": "Aspirin",
+      "category": "instructions",
+      "source": "SingHealth Pharmacy Guidelines"
+    },
+    "content": "给您开的是“阿司匹林肠溶片”。请特别注意：【它必须要空腹吃】（饭前至少半小时到一小时）。空腹吃能让它快速通过胃部直接掉落到肠道里才开始融化，完美保护您的胃黏膜。如果在刷牙时发现牙床经常出血或大便发黑，请尽快联系Polyclinic药剂师或医生。"
+  }
+]
