@@ -8,11 +8,13 @@ import { ZhipuAI } from 'zhipuai'; // 引入智谱 SDK
 // 1. 客户端初始化 (双管齐下)
 // ==========================================
 
-// 海狮客户端：专职和患者聊天
+// 初始化 Cloudflare 代理的客户端
 const seaLionClient = new OpenAI({
-  apiKey: process.env.SEALION_API_KEY,
-  baseURL: process.env.SEALION_BASE_URL,
+  apiKey: process.env.CLOUDFLARE_API_TOKEN,
+  // 注意这里的 URL 拼接了你的账户 ID
+  baseURL: `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/v1`,
 });
+
 
 // 智谱客户端：专职算向量、查知识库
 const zhipuClient = new ZhipuAI({
@@ -141,7 +143,7 @@ ${textData}
 
   const response = await withRetry(async () => {
     return await seaLionClient.chat.completions.create({
-      model: "aisingapore/Gemma-SEA-LION-v4-27B-IT", 
+      model: "@cf/aisingapore/gemma-sea-lion-v4-27b-it", 
       messages: [{ role: "user", content: prompt }],
       temperature: 0.1,
     });
@@ -172,7 +174,7 @@ ${textData}
 `;
 
   const response = await seaLionClient.chat.completions.create({
-    model: 'aisingapore/Gemma-SEA-LION-v4-27B-IT',
+    model: '@cf/aisingapore/gemma-sea-lion-v4-27b-it',
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.1,
   });
@@ -209,7 +211,7 @@ ${newInfo}
 `;
 
   const response = await seaLionClient.chat.completions.create({
-    model: "aisingapore/Gemma-SEA-LION-v4-27B-IT",
+    model: "@cf/aisingapore/gemma-sea-lion-v4-27b-it",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.5,
   });
@@ -249,7 +251,7 @@ ${context}
     ];
 
   const response = await seaLionClient.chat.completions.create({
-    model: "aisingapore/Gemma-SEA-LION-v4-27B-IT",
+    model: "@cf/aisingapore/gemma-sea-lion-v4-27b-it",
         messages,
   });
 
@@ -366,7 +368,7 @@ ${context}
   ];
 
   const response = await seaLionClient.chat.completions.create({
-    model: 'aisingapore/Gemma-SEA-LION-v4-27B-IT',
+    model: '@cf/aisingapore/gemma-sea-lion-v4-27b-it',
     messages,
     temperature: 0.4,
   });
@@ -431,7 +433,7 @@ ${relevantKnowledge}
 `;
 
   const response = await seaLionClient.chat.completions.create({
-    model: "aisingapore/Gemma-SEA-LION-v4-27B-IT",
+    model: "@cf/aisingapore/gemma-sea-lion-v4-27b-it",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.4,
   });
@@ -468,7 +470,7 @@ ${query}
 
   const response = await withRetry(async () => {
     return await seaLionClient.chat.completions.create({
-      model: "aisingapore/Gemma-SEA-LION-v4-27B-IT",
+      model: "@cf/aisingapore/gemma-sea-lion-v4-27b-it",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.1,
     });
@@ -494,7 +496,7 @@ ${relevantKnowledge}
 `;
 
   const response = await seaLionClient.chat.completions.create({
-    model: "aisingapore/Gemma-SEA-LION-v4-27B-IT",
+    model: "@cf/aisingapore/gemma-sea-lion-v4-27b-it",
     messages: [{ role: "user", content: prompt }],
   });
 
