@@ -113,6 +113,21 @@ const initDb = () => {
       created_at TEXT DEFAULT (datetime('now', 'localtime'))
     )
   `);
+
+  // 4. 创建 voice_records 表 (语音记录)
+  // id: 自增主键, patient_id: 关联患者, transcribed_text: 转录后的文本, source: 来源, confidence: 置信度, status: 状态, created_at: 创建时间
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS voice_records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      patient_id TEXT NOT NULL,
+      transcribed_text TEXT,
+      source TEXT,
+      confidence REAL,
+      status TEXT DEFAULT 'completed',
+      created_at TEXT DEFAULT (datetime('now', 'localtime')),
+      FOREIGN KEY(patient_id) REFERENCES patients(id) ON DELETE CASCADE
+    )
+  `);
   
   // 创建索引以加速查询（可选）
   db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_patient_id ON memories(patient_id)`);
@@ -120,6 +135,7 @@ const initDb = () => {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_patient_ai_state_patient_id ON patient_ai_state(patient_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_doctor_consultations_patient_id ON doctor_consultations(patient_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_doctor_consultations_status ON doctor_consultations(status)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_voice_records_patient_id ON voice_records(patient_id)`);
 };
 
 // 执行初始化

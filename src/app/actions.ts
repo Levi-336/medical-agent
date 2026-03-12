@@ -1206,3 +1206,60 @@ export async function getPatientMemories(patientId: string): Promise<Array<{ id:
   );
   return stmt.all(patientId) as Array<{ id: number; content: string; source: string | null; created_at: string }>;
 }
+
+// 定义语音记录接口
+export interface VoiceRecord {
+  id: number;
+  patient_id: string;
+  transcribed_text: string;
+  source: string;
+  confidence: number | null;
+  status: string;
+  created_at: string;
+}
+
+// Action: 保存语音记录到数据库
+export async function saveVoiceRecord(
+  patientId: string,
+  transcribedText: string,
+  source: string = 'patient_chat',
+  confidence?: number
+): Promise<number> {
+  const stmt = db.prepare(
+    'INSERT INTO voice_records (patient_id, transcribed_text, source, confidence, status) VALUES (?, ?, ?, ?, ?)'
+  );
+  const info = stmt.run(patientId, transcribedText, source, confidence ?? null, 'completed');
+  return Number(info.lastInsertRowid);
+}
+
+// Action: 处理语音消息（转录）
+export async function processVoiceMessage(
+  patientId: string,
+  transcribedText: string,
+  history: HistoryMessage[] = [],
+  source: string = 'patient_chat',
+  confidence?: number
+) {
+  try {
+    console.log(`[processVoiceMessage] Processing voice for ${patientId}: ${transcribedText}`);
+    
+    // 保存语音记录到数据库
+    await saveVoiceRecord(patientId, transcribedText, source, confidence);
+
+    // 使用相同的逻辑处理转录后的文本，就像处理文本消息一样
+    const result = await processUserMessage(patientId, transcribedText, history);
+    
+    return result;
+  } catch (err) {
+    console.error('[processVoiceMessage] Error:', err);
+    throw err;
+  }
+}
+
+// Action: 获取患者的语音记录列表
+export async function getPatientVoiceRecords(patientId: string, limit: number = 20): Promise<VoiceRecord[]> {
+  const stmt = db.prepare(
+    'SELECT id, patient_id, transcribed_text, source, confidence, status, created_at FROM voice_records WHERE patient_id = ? ORDER BY created_at DESC LIMIT ?'
+  );
+  return stmt.all(patientId, limit) as VoiceRecord[];
+}

@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { Patient, ChatMessage } from '@/app/actions';
-import { processUserMessage } from '@/app/actions';
+import { processUserMessage, processVoiceMessage } from '@/app/actions';
 import { cn } from '@/lib/utils';
 import doctorAvatar from '@/app/character-7166558_1280.png';
 
@@ -83,7 +83,10 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [transcript, setTranscript] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
   const doctorDisplayName = process.env.NEXT_PUBLIC_DOCTOR_NAME || '张医生';
   const doctorAvatarSrc = (doctorAvatar as unknown as { src?: string }).src || (doctorAvatar as unknown as string);
 
@@ -98,6 +101,92 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
   }, [messages, loading]);
 
   const patientAvatarText = useMemo(() => patient.name?.slice(0, 1) || '患', [patient.name]);
+
+  // 初始化 Web Speech API
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'zh-CN';
+
+        recognition.onstart = () => {
+          setIsRecording(true);
+          setTranscript('');
+        };
+
+        recognition.onresult = (event: any) => {
+          let interimTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcriptSegment = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              setTranscript(prev => prev + transcriptSegment);
+            } else {
+              interimTranscript += transcriptSegment;
+            }
+          }
+        };
+
+        recognition.onerror = (event: any) => {
+          console.error('Speech recognition error', event.error);
+          alert(`语音识别出错: ${event.error}`);
+          setIsRecording(false);
+        };
+
+        recognition.onend = () => {
+          setIsRecording(false);
+        };
+
+        recognitionRef.current = recognition;
+      }
+    }
+  }, []);
+
+  const toggleVoiceRecording = () => {
+    if (!recognitionRef.current) {
+      alert('您的浏览器不支持语音识别功能');
+      return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+    }
+  };
+
+  const handleVoiceTranscriptSend = async () => {
+    if (!transcript.trim() || loading) return;
+
+    const voiceText = transcript;
+    setTranscript('');
+    setLoading(true);
+
+    const tempId = `temp_${Date.now()}`;
+    setMessages((prev) => [...prev, { id: tempId, role: 'user', content: voiceText }]);
+
+    try {
+      const historyForAI = messages.map(
+        (m): { role: 'user' | 'ai' | 'assistant' | 'doctor'; content: string } => ({
+          role:
+            m.role === 'user' ? 'user' : m.role === 'assistant' ? 'assistant' : m.role === 'doctor' ? 'doctor' : 'ai',
+          content: m.content,
+        })
+      );
+
+      const result = await processVoiceMessage(patient.id, voiceText, historyForAI, 'patient_chat');
+      if (result.response) {
+        setMessages((prev) => [...prev, { id: `ai_${Date.now()}`, role: 'ai', content: result.response }]);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('语音处理失败');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -230,14 +319,52 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
         className="z-20 w-full border-t border-[#e5e5e5] bg-[#f7f7f7] px-3 py-2"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 1rem)' }}
       >
+        {/* Voice Transcript Display */}
+        {(transcript || isRecording) && (
+          <div className="mb-2 px-3 py-2 bg-[#e8f5e8] border border-[#07C160] rounded-lg">
+            <div className="text-xs font-semibold text-[#07C160] mb-1">
+              {isRecording ? '🎤 录音中...' : '✓ 识别结果'}
+            </div>
+            <div className="text-sm text-[#111711] p-2 bg-white rounded border min-h-10">
+              {transcript || '(等待...)'}
+            </div>
+            {transcript && !isRecording && (
+              <div className="flex gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={handleVoiceTranscriptSend}
+                  disabled={loading}
+                  className="flex-1 p-2 text-sm bg-[#07C160] text-white rounded hover:bg-[#06a552] disabled:opacity-60 transition"
+                >
+                  发送语音
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTranscript('')}
+                  className="px-3 p-2 text-sm bg-[#f0f0f0] text-[#181818] rounded hover:bg-[#e0e0e0] transition"
+                >
+                  清除
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         <form onSubmit={handleSend} className="flex items-center gap-3">
           <button
             type="button"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#181818] text-[#181818]"
-            aria-label="语音"
+            onClick={toggleVoiceRecording}
+            disabled={loading}
+            className={cn(
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors",
+              isRecording
+                ? "border-red-500 bg-red-500 text-white"
+                : "border-[#181818] text-[#181818] hover:bg-[#07C160] hover:border-[#07C160] hover:text-white"
+            )}
+            aria-label={isRecording ? "停止录音" : "语音"}
           >
             <span className="material-symbols-outlined !text-[20px] leading-none rotate-90" style={iconThinStyle}>
-              wifi_tethering
+              {isRecording ? 'stop' : 'wifi_tethering'}
             </span>
           </button>
 
@@ -247,7 +374,7 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
               onChange={(e) => setInput(e.target.value)}
               placeholder="输入消息"
               className="w-full bg-transparent p-0 text-[16px] text-[#111711] focus:outline-none border-none h-5 leading-5"
-              disabled={loading}
+              disabled={loading || isRecording}
             />
           </div>
 
