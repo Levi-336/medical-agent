@@ -54,95 +54,126 @@ export default async function FakeChatPage({ params }: PageProps) {
   const contact = CONTACTS[id];
 
   return (
-    <div className="relative mx-auto flex h-screen max-h-screen w-full max-w-md flex-col overflow-hidden bg-[#f2f2f2] shadow-2xl">
-      <header className="z-20 flex h-14 w-full items-center justify-between bg-[#f2f2f2] px-4">
-        <div className="flex items-center w-[88px]">
-          <Link href="/patient" className="flex items-center text-[#181818] hover:text-gray-600 transition-colors" aria-label="返回">
-            <span className="material-symbols-outlined !text-[30px] leading-none" style={iconThinStyle()}>
-              arrow_back_ios_new
+    <div className="relative mx-auto flex h-screen max-h-screen w-full max-w-md flex-col overflow-hidden bg-[#0f1419] shadow-2xl whatsapp-theme">
+      {/* iPhone 状态栏模拟 */}
+      <div className="h-[44px] w-full bg-[#202c33] sticky top-0 z-20 shrink-0 flex items-center justify-center">
+        <div className="w-[134px] h-[20px] bg-black rounded-full"></div>
+      </div>
+      
+      <header className="z-20 flex h-16 w-full items-center justify-between bg-[#202c33] px-4 border-b border-[#313d44]">
+        <div className="flex items-center w-[50px]">
+          <Link href="/patient" className="flex items-center text-[#8696a0] hover:text-white transition-colors p-1" aria-label="返回">
+            <span className="material-symbols-outlined !text-[24px] leading-none" style={iconThinStyle()}>
+              arrow_back
             </span>
           </Link>
         </div>
-        <h1 className="flex-1 text-center text-[17px] font-semibold text-[#181818] tracking-wide">{contact.title}</h1>
-        <div className="flex items-center justify-end w-[88px]">
-          <button type="button" className="flex items-center justify-center text-[#181818] hover:text-gray-600 transition-colors" aria-label="更多">
-            <span className="material-symbols-outlined !text-[28px] leading-none" style={iconThinStyle()}>
-              more_horiz
+        <div className="flex-1 flex items-center justify-center gap-3">
+          <div 
+            className="h-9 w-9 shrink-0 overflow-hidden rounded-full flex items-center justify-center text-[16px] font-semibold text-white"
+            style={{ backgroundColor: contact.avatarBg }}
+          >
+            {contact.avatarText}
+          </div>
+          <div className="text-center">
+            <h1 className="text-[16px] font-medium text-[#e9edef]">{contact.title}</h1>
+            <p className="text-[12px] text-[#8696a0]">演示对话</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-end w-[50px]">
+          <button type="button" className="flex items-center justify-center text-[#8696a0] hover:text-white transition-colors p-1" aria-label="更多">
+            <span className="material-symbols-outlined !text-[24px] leading-none" style={iconThinStyle()}>
+              more_vert
             </span>
           </button>
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#f2f2f2] border-t border-[#e5e5e5]">
+      <main 
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0f1419] no-scrollbar"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='a' patternUnits='userSpaceOnUse' width='20' height='20' patternTransform='scale(0.5) rotate(0)'%3e%3crect x='0' y='0' width='100%25' height='100%25' fill='hsla(0, 0%25, 100%25, 0)'/%3e%3cpath d='M 10,-2.55e-7 V 20 Z M -1.1677362e-8,10 H 20 Z' stroke-width='0.2' stroke='hsla(0, 0%25, 100%25, 0.01)' fill='none'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100%25' height='100%25' fill='url(%23a)'/%3e%3c/svg%3e")`,
+        }}
+      >
         {contact.messages.map((m, idx) =>
           m.side === 'left' ? (
             <div key={idx} className="flex items-start gap-3">
               <div
-                className="h-10 w-10 shrink-0 overflow-hidden rounded-md shadow-sm flex items-center justify-center text-[16px] font-semibold text-white"
+                className="h-10 w-10 shrink-0 overflow-hidden rounded-full shadow-sm flex items-center justify-center text-[16px] font-semibold text-white"
                 style={{ backgroundColor: contact.avatarBg }}
               >
                 {contact.avatarText}
               </div>
-              <div className="flex max-w-[70%] flex-col gap-1">
-                <div className="relative rounded-md bg-white px-3 py-2 text-[16px] leading-relaxed text-black shadow-sm">
-                  <span className="absolute top-3 -left-[6px] w-0 h-0 border-t-[6px] border-t-transparent border-r-[8px] border-r-white border-b-[6px] border-b-transparent" />
-                  {m.text}
+              <div className="flex max-w-[75%] flex-col gap-1">
+                <div className="relative rounded-2xl px-3 py-2.5 text-[15px] leading-relaxed shadow-sm bg-[#202c33] text-[#e9edef] rounded-bl-md">
+                  <div className="whitespace-pre-wrap">{m.text}</div>
                 </div>
+                <span className="text-xs text-[#8696a0] ml-2">刚刚</span>
               </div>
             </div>
           ) : (
             <div key={idx} className="flex items-start justify-end gap-3">
-              <div className="flex max-w-[70%] flex-col gap-1 items-end">
-                <div className="relative rounded-md bg-[#95ec69] px-3 py-2 text-[16px] leading-relaxed text-black shadow-sm">
-                  <span className="absolute top-3 -right-[6px] w-0 h-0 border-t-[6px] border-t-transparent border-l-[8px] border-l-[#95ec69] border-b-[6px] border-b-transparent" />
-                  {m.text}
+              <div className="flex max-w-[75%] flex-col gap-1 items-end">
+                <div className="relative rounded-2xl px-3 py-2.5 text-[15px] leading-relaxed shadow-sm bg-[#005c4b] text-[#e9edef] rounded-br-md">
+                  <div className="whitespace-pre-wrap">{m.text}</div>
+                  <div className="flex items-center justify-end mt-1">
+                    <span className="text-xs text-[#8ce8c7] mr-1">刚刚</span>
+                    <span className="material-symbols-outlined !text-[14px] text-[#53bdeb]">done_all</span>
+                  </div>
                 </div>
               </div>
-              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md shadow-sm bg-white flex items-center justify-center text-[16px] font-semibold text-[#2e62d9]">
+              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full shadow-sm bg-[#00d95f] flex items-center justify-center text-[16px] font-semibold text-white">
                 我
               </div>
             </div>
           )
         )}
-        <div className="h-2" />
+        <div className="h-4" />
       </main>
 
       <footer
-        className="z-20 w-full border-t border-[#e5e5e5] bg-[#f7f7f7] px-3 py-2"
+        className="z-20 w-full bg-[#202c33] px-3 py-3"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 1rem)' }}
       >
         <div className="flex items-center gap-3">
           <button
             type="button"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#181818] text-[#181818]"
+            className="flex items-center justify-center w-11 h-11 rounded-full bg-[#2a3942] text-[#8696a0] transition-all shrink-0"
             aria-label="语音"
             disabled
           >
-            <span className="material-symbols-outlined !text-[20px] leading-none rotate-90 opacity-60" style={iconThinStyle()}>
-              wifi_tethering
-            </span>
+            <span className="material-symbols-outlined !text-[20px] opacity-60">mic</span>
           </button>
-          <div className="flex flex-1 items-center rounded-md bg-white px-3 py-[9px]">
+          <div className="flex flex-1 items-center rounded-full bg-[#2a3942] px-4 py-2.5 min-h-[44px]">
             <input
-              placeholder="输入消息"
-              className="w-full bg-transparent p-0 text-[16px] text-[#111711] focus:outline-none border-none h-5 leading-5"
+              placeholder="消息"
+              className="w-full bg-transparent p-0 text-[16px] text-[#e9edef] placeholder-[#8696a0] focus:outline-none border-none h-5 leading-5"
               disabled
             />
+            <button
+              type="button"
+              className="ml-2 p-1 text-[#8696a0] transition-colors opacity-60"
+              aria-label="表情"
+              disabled
+            >
+              <span className="material-symbols-outlined !text-[20px]">sentiment_satisfied</span>
+            </button>
+            <button
+              type="button"
+              className="ml-1 p-1 text-[#8696a0] transition-colors opacity-60"
+              aria-label="附件"
+              disabled
+            >
+              <span className="material-symbols-outlined !text-[20px]">attach_file</span>
+            </button>
           </div>
-          <button type="button" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#181818]" aria-label="表情" disabled>
-            <span className="material-symbols-outlined !text-[32px] leading-none opacity-60" style={iconThinStyle()}>
-              sentiment_satisfied
-            </span>
-          </button>
-          <button
-            type="button"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#181818] text-[#181818]"
-            aria-label="更多功能"
+          <button 
+            type="button" 
+            className="h-11 w-11 shrink-0 rounded-full bg-[#8696a0] text-white flex items-center justify-center opacity-60 transition-all shadow-sm"
+            aria-label="发送"
             disabled
           >
-            <span className="material-symbols-outlined !text-[22px] leading-none opacity-60" style={iconThinStyle()}>
-              add
-            </span>
+            <span className="material-symbols-outlined !text-[20px]">send</span>
           </button>
         </div>
       </footer>

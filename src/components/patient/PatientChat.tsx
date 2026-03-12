@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Patient, ChatMessage, processUserMessage, getChatHistory } from '@/app/actions';
 import { Home, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import VoiceInput from "@/components/patient/VoiceInput";
+
 
 interface PatientChatProps {
   patients: Patient[];
@@ -42,7 +44,7 @@ function renderContentWithPayLink(content: string) {
   return parts.map((part, idx) => {
     if (/^\/patient\/pay\/[a-zA-Z0-9_-]+$/.test(part)) {
       return (
-        <Link key={`${part}_${idx}`} href={part} className="text-blue-600 underline underline-offset-2">
+        <Link key={`${part}_${idx}`} href={part} className="text-[#53bdeb] underline underline-offset-2 hover:text-[#4a9eda]">
           {part}
         </Link>
       );
@@ -56,6 +58,7 @@ export default function PatientChat({ patients }: PatientChatProps) {
   const [messages, setMessages] = useState<{ id: string; role: PatientVisibleRole; content: string }[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [voiceProcessing, setVoiceProcessing] = useState(false); // 新增状态：语音处理中
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -126,23 +129,37 @@ export default function PatientChat({ patients }: PatientChatProps) {
     }
   };
 
+  const handleVoiceInput = (text: string) => {
+    // 显示确认框让用户确认语音识别结果
+    const confirmed = window.confirm(`语音识别结果："${text}"\n是否将其添加到输入框？`);
+    if (confirmed) {
+      setInput((prev) => (prev ? prev + text : text));
+    }
+    setVoiceProcessing(false); // 语音处理完成
+  };
+
   if (patients.length === 0) {
     return <div className="p-8 text-center text-slate-500">请先在医生助理端创建患者</div>;
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-100 max-w-md mx-auto shadow-2xl overflow-hidden border-x border-slate-200">
+    <div className="flex flex-col h-screen bg-[#0f1419] max-w-md mx-auto shadow-2xl overflow-hidden border-x border-[#313d44] whatsapp-theme">
+        {/* Status bar mockup */}
+        <div className="h-[44px] w-full bg-[#202c33] sticky top-0 z-20 shrink-0 flex items-center justify-center">
+          <div className="w-[134px] h-[20px] bg-black rounded-full"></div>
+        </div>
+        
         {/* Header */}
-        <div className="bg-white p-4 shadow-sm z-10 border-b border-slate-200 flex justify-between items-center gap-2">
+        <div className="bg-[#202c33] p-4 shadow-sm z-10 border-b border-[#313d44] flex justify-between items-center gap-2">
             <div className="flex-1">
-                <label className="block text-xs font-bold text-slate-500 mb-1">当前模拟身份</label>
+                <label className="block text-xs font-medium text-[#8696a0] mb-2">当前模拟身份</label>
                 <select 
-                    className="w-full p-2 border border-slate-300 rounded-lg text-sm bg-slate-50 text-slate-900"
+                    className="w-full p-2.5 border border-[#313d44] rounded-lg text-sm bg-[#2a3942] text-[#e9edef] focus:outline-none focus:border-[#00d95f] transition-colors"
                     value={selectedPatientId}
                     onChange={(e) => setSelectedPatientId(e.target.value)}
                 >
                     {patients.map(p => (
-                        <option key={p.id} value={p.id}>
+                        <option key={p.id} value={p.id} className="bg-[#2a3942] text-[#e9edef]">
                           {p.name} ({p.gender || '—'}, {p.age != null ? `${p.age}岁` : '—'})
                         </option>
                     ))}
@@ -150,35 +167,49 @@ export default function PatientChat({ patients }: PatientChatProps) {
             </div>
             <Link 
                 href="/" 
-                className="flex flex-col items-center justify-center p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition text-xs"
+                className="flex flex-col items-center justify-center p-2 text-[#8696a0] hover:text-[#e9edef] hover:bg-[#2a3942] rounded-lg transition text-xs"
                 title="返回首页"
             >
                 <Home size={20} />
-                <span className="scale-90">首页</span>
+                <span className="scale-90 mt-0.5">首页</span>
             </Link>
         </div>
 
         {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50" ref={scrollRef}>
-            {messages.map(msg => (
-                <div key={msg.id} className={cn("flex", msg.role === 'user' ? "justify-end" : "justify-start")}>
-                    <div className={cn(
-                        "max-w-[85%] p-3 rounded-2xl text-sm shadow-sm",
-                        msg.role === 'user' 
-                            ? "bg-blue-600 text-white rounded-br-none" 
-                            : "bg-white text-slate-800 rounded-bl-none border border-slate-100"
-                    )}>
-                        {renderContentWithPayLink(formatPatientVisibleContent(msg.role, msg.content))}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0f1419]" 
+             style={{
+               backgroundImage: `url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='a' patternUnits='userSpaceOnUse' width='20' height='20' patternTransform='scale(0.5) rotate(0)'%3e%3crect x='0' y='0' width='100%25' height='100%25' fill='hsla(0, 0%25, 100%25, 0)'/%3e%3cpath d='M 10,-2.55e-7 V 20 Z M -1.1677362e-8,10 H 20 Z' stroke-width='0.2' stroke='hsla(0, 0%25, 100%25, 0.01)' fill='none'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100%25' height='100%25' fill='url(%23a)'/%3e%3c/svg%3e")`,
+             }}
+             ref={scrollRef}>
+            {messages.length === 0 ? (
+                <div className="text-center text-[#8696a0] mt-10 space-y-2">
+                    <div className="mb-4">
+                      <span className="material-symbols-outlined !text-[64px] text-[#54656f]">chat_bubble_outline</span>
                     </div>
+                    <p className="text-[16px]">开始与医生对话</p>
+                    <p className="text-[13px] text-[#667781]">选择身份后发送消息开始咨询</p>
                 </div>
-            ))}
+            ) : (
+                messages.map(msg => (
+                    <div key={msg.id} className={cn("flex", msg.role === 'user' ? "justify-end" : "justify-start")}>
+                        <div className={cn(
+                            "max-w-[85%] px-3 py-2.5 rounded-2xl text-[15px] shadow-sm whitespace-pre-wrap",
+                            msg.role === 'user' 
+                                ? "bg-[#005c4b] text-[#e9edef] rounded-br-md" 
+                                : "bg-[#202c33] text-[#e9edef] rounded-bl-md"
+                        )}>
+                            {renderContentWithPayLink(formatPatientVisibleContent(msg.role, msg.content))}
+                        </div>
+                    </div>
+                ))
+            )}
             {loading && (
                 <div className="flex justify-start">
-                    <div className="bg-white p-3 rounded-2xl rounded-bl-none border border-slate-100 shadow-sm">
+                    <div className="bg-[#202c33] p-4 rounded-2xl rounded-bl-md shadow-sm">
                         <div className="flex gap-1">
-                            <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></span>
-                            <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce delay-75"></span>
-                            <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce delay-150"></span>
+                            <span className="w-2 h-2 bg-[#00d95f] rounded-full animate-bounce"></span>
+                            <span className="w-2 h-2 bg-[#00d95f] rounded-full animate-bounce delay-75"></span>
+                            <span className="w-2 h-2 bg-[#00d95f] rounded-full animate-bounce delay-150"></span>
                         </div>
                     </div>
                 </div>
@@ -186,20 +217,38 @@ export default function PatientChat({ patients }: PatientChatProps) {
         </div>
 
         {/* Input Area */}
-        <form onSubmit={handleSend} className="bg-white p-4 border-t border-slate-200 flex gap-2">
-            <input 
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="描述你的症状..."
-                className="flex-1 p-3 bg-slate-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-slate-900"
-                disabled={loading}
+        <form onSubmit={handleSend} className="bg-[#202c33] p-4 flex items-center gap-3">
+            <VoiceInput 
+                onTextRecognized={(text) => {
+                    setVoiceProcessing(true); // 设置语音处理中状态
+                    handleVoiceInput(text);
+                }} 
             />
+
+            <div className="flex-1 flex items-center rounded-full bg-[#2a3942] px-4 py-2.5 min-h-[44px]">
+                <input 
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder={voiceProcessing ? "语音处理中..." : "消息"} 
+                    className="flex-1 bg-transparent text-[16px] text-[#e9edef] placeholder-[#8696a0] focus:outline-none border-none"
+                    disabled={loading || voiceProcessing}
+                />
+                <button
+                  type="button"
+                  className="ml-2 p-1 text-[#8696a0] hover:text-[#e9edef] transition-colors"
+                  aria-label="表情"
+                >
+                  <span className="material-symbols-outlined !text-[20px]">sentiment_satisfied</span>
+                </button>
+            </div>
+
             <button 
                 type="submit" 
                 disabled={loading || !input.trim()}
-                className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 transition shadow-sm"
+                className="h-11 w-11 shrink-0 rounded-full bg-[#00d95f] text-white flex items-center justify-center disabled:opacity-60 disabled:bg-[#8696a0] transition-all shadow-sm"
+                aria-label="发送"
             >
-                <Send size={18} />
+                <Send size={20} />
             </button>
         </form>
     </div>

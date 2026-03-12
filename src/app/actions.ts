@@ -997,6 +997,55 @@ export async function processUserMessage(patientId: string, message: string, his
   }
 }
 
+// Action: 获取 Meralion 上传 URL
+export async function getMeralionUploadUrl(fileName: string, fileSize: number, contentType: string) {
+  // 必须传入 fileName, contentType, fileSize [cite: 854]
+  const response = await fetch(`${process.env.MERALION_BASE_URL}/upload-url`, {
+    method: 'POST',
+    headers: {
+      'x-api-key': process.env.MERALION_API_KEY!,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      filename: fileName,
+      contentType: contentType, // 例如 "audio/wav" 或 "audio/webm" [cite: 485]
+      filesize: fileSize
+    })
+  });
+  
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+  }
+  
+  const data = await response.json();
+  // 官方建议始终保存返回的 key，后续步骤全靠它 [cite: 896]
+  return {
+    url: data.response.url,
+    fileKey: data.response.key 
+  };
+}
+
+// Action: 语音转文本（转录）接口
+export async function transcribeAudioWithMeralion(fileKey: string) {
+  const response = await fetch(`${process.env.MERALION_BASE_URL}/transcribe`, {
+    method: 'POST',
+    headers: {
+      'x-api-key': process.env.MERALION_API_KEY!,
+      'Content-Type': 'application/json'
+    },
+    // 将上一步获取的 fileKey 传给转录接口 [cite: 626]
+    body: JSON.stringify({ key: fileKey }) 
+  });
+  
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+  }
+  
+  const data = await response.json();
+  // 返回转录好的纯文本 [cite: 650]
+  return data.response.text; 
+}
+
 // Action: 添加知识库条目
 export async function addKnowledge(content: string, category: string = 'general') {
     const embedding = await getEmbedding(content);

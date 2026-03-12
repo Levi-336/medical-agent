@@ -4,8 +4,9 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { Patient, ChatMessage } from '@/app/actions';
 import { processUserMessage } from '@/app/actions';
-import { cn } from '@/lib/utils';
+import VoiceInput from './VoiceInput';
 import doctorAvatar from '@/app/character-7166558_1280.png';
+import cn from 'classnames'; // 添加此行以导入 cn 函数
 
 const iconThinStyle: React.CSSProperties = {
   fontVariationSettings: "'wght' 300, 'FILL' 0, 'GRAD' 0, 'opsz' 24",
@@ -69,7 +70,7 @@ function renderContentWithPayLink(content: string) {
   return parts.map((part, idx) => {
     if (/^\/patient\/pay\/[a-zA-Z0-9_-]+$/.test(part)) {
       return (
-        <Link key={`${part}_${idx}`} href={part} className="text-[#07C160] underline underline-offset-2">
+        <Link key={`${part}_${idx}`} href={part} className="text-[#53bdeb] underline underline-offset-2 hover:text-[#4a9eda]">
           {part}
         </Link>
       );
@@ -131,39 +132,60 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
   };
 
   return (
-    <div className="relative mx-auto flex h-screen max-h-screen w-full max-w-md flex-col overflow-hidden bg-[#f2f2f2] shadow-2xl">
-      <header className="z-20 flex h-14 w-full items-center justify-between bg-[#f2f2f2] px-4">
-        <div className="flex items-center w-[88px]">
+    <div className="relative mx-auto flex h-screen max-h-screen w-full max-w-md flex-col overflow-hidden bg-[#0f1419] shadow-2xl whatsapp-theme">
+      <div className="h-[44px] w-full bg-[#202c33] sticky top-0 z-20 shrink-0 flex items-center justify-center">
+        <div className="w-[134px] h-[20px] bg-black rounded-full"></div>
+      </div>
+      
+      <header className="z-20 flex h-16 w-full items-center justify-between bg-[#202c33] px-4 border-b border-[#313d44]">
+        <div className="flex items-center w-[50px]">
           <Link
             href="/patient"
-            className="flex items-center text-[#181818] hover:text-gray-600 transition-colors"
+            className="flex items-center text-[#8696a0] hover:text-white transition-colors p-1"
             aria-label="返回"
           >
-            <span className="material-symbols-outlined !text-[30px] leading-none" style={iconThinStyle}>
-              arrow_back_ios_new
+            <span className="material-symbols-outlined !text-[24px] leading-none" style={iconThinStyle}>
+              arrow_back
             </span>
           </Link>
         </div>
-        <h1 className="flex-1 text-center text-[17px] font-semibold text-[#181818] tracking-wide">{doctorDisplayName}</h1>
-        <div className="flex items-center justify-end w-[88px]">
+        <div className="flex-1 flex items-center justify-center gap-3">
+          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-white">
+            <img src={doctorAvatarSrc} alt="医生头像" className="h-full w-full object-cover" draggable={false} />
+          </div>
+          <div className="text-center">
+            <h1 className="text-[16px] font-medium text-[#e9edef]">{doctorDisplayName}</h1>
+            <p className="text-[12px] text-[#8696a0]">在线</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-end w-[50px]">
           <button
             type="button"
-            className="flex items-center justify-center text-[#181818] hover:text-gray-600 transition-colors"
+            className="flex items-center justify-center text-[#8696a0] hover:text-white transition-colors p-1"
             aria-label="更多"
           >
-            <span className="material-symbols-outlined !text-[28px] leading-none" style={iconThinStyle}>
-              more_horiz
+            <span className="material-symbols-outlined !text-[24px] leading-none" style={iconThinStyle}>
+              more_vert
             </span>
           </button>
         </div>
       </header>
 
       <main
-        className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#f2f2f2] border-t border-[#e5e5e5] no-scrollbar"
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0f1419] no-scrollbar"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='a' patternUnits='userSpaceOnUse' width='20' height='20' patternTransform='scale(0.5) rotate(0)'%3e%3crect x='0' y='0' width='100%25' height='100%25' fill='hsla(0, 0%25, 100%25, 0)'/%3e%3cpath d='M 10,-2.55e-7 V 20 Z M -1.1677362e-8,10 H 20 Z' stroke-width='0.2' stroke='hsla(0, 0%25, 100%25, 0.01)' fill='none'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100%25' height='100%25' fill='url(%23a)'/%3e%3c/svg%3e")`,
+        }}
         ref={scrollRef}
       >
         {messages.length === 0 ? (
-          <div className="text-center text-slate-400 mt-10">暂无对话记录</div>
+          <div className="text-center text-[#8696a0] mt-10 space-y-2">
+            <div className="mb-4">
+              <span className="material-symbols-outlined !text-[64px] text-[#54656f]">chat_bubble_outline</span>
+            </div>
+            <p className="text-[16px]">开始与医生对话</p>
+            <p className="text-[13px] text-[#667781]">发送消息开始咨询</p>
+          </div>
         ) : (
           messages.map((msg) => {
             const isUser = msg.role === 'user';
@@ -172,33 +194,38 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
             return (
               <div key={msg.id} className={cn('flex items-start gap-3', isUser ? 'justify-end' : 'justify-start')}>
                 {!isUser && (
-                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md shadow-sm bg-white">
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full shadow-sm bg-white">
                     <img src={doctorAvatarSrc} alt="医生头像" className="h-full w-full object-cover" draggable={false} />
                   </div>
                 )}
 
-                <div className={cn('flex max-w-[70%] flex-col gap-1', isUser ? 'items-end' : 'items-start')}>
+                <div className={cn('flex max-w-[75%] flex-col gap-1', isUser ? 'items-end' : 'items-start')}>
                   <div
                     className={cn(
-                      'relative rounded-md px-3 py-2 text-[16px] leading-relaxed text-black shadow-sm',
-                      isUser ? 'bg-[#95ec69]' : 'bg-white'
+                      'relative rounded-2xl px-3 py-2.5 text-[15px] leading-relaxed shadow-sm',
+                      isUser
+                        ? 'bg-[#005c4b] text-[#e9edef] rounded-br-md'
+                        : 'bg-[#202c33] text-[#e9edef] rounded-bl-md'
                     )}
                   >
-                    <span
-                      className={cn(
-                        'absolute top-3 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent',
-                        isUser
-                          ? '-right-[6px] border-l-[8px] border-l-[#95ec69]'
-                          : '-left-[6px] border-r-[8px] border-r-white'
-                      )}
-                    />
-                    {renderContentWithPayLink(formatPatientVisibleContent(msg.role, msg.content))}
+                    <div className="whitespace-pre-wrap">
+                      {renderContentWithPayLink(formatPatientVisibleContent(msg.role, msg.content))}
+                    </div>
+                    {/* Message status indicator for user messages */}
+                    {isUser && (
+                      <div className="flex items-center justify-end mt-1">
+                        <span className="text-xs text-[#8ce8c7] mr-1">{timeText}</span>
+                        <span className="material-symbols-outlined !text-[14px] text-[#53bdeb]">done_all</span>
+                      </div>
+                    )}
                   </div>
-                  {timeText && <div className="text-[10px] text-slate-400 px-1">{timeText}</div>}
+                  {!isUser && (
+                    <span className="text-xs text-[#8696a0] ml-2">{timeText}</span>
+                  )}
                 </div>
 
                 {isUser && (
-                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md shadow-sm bg-white flex items-center justify-center text-[16px] font-semibold text-[#2e62d9]">
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full shadow-sm bg-[#00d95f] flex items-center justify-center text-[16px] font-semibold text-white">
                     {patientAvatarText}
                   </div>
                 )}
@@ -209,78 +236,66 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
 
         {loading && (
           <div className="flex items-start gap-3">
-            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md shadow-sm bg-white">
+            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full shadow-sm bg-white">
               <img src={doctorAvatarSrc} alt="医生头像" className="h-full w-full object-cover" draggable={false} />
             </div>
             <div className="flex max-w-[70%] flex-col gap-1">
-              <div className="relative rounded-md bg-white px-3 py-2 text-[16px] leading-relaxed text-black shadow-sm">
-                <span className="absolute top-3 -left-[6px] w-0 h-0 border-t-[6px] border-t-transparent border-r-[8px] border-r-white border-b-[6px] border-b-transparent" />
-                <div className="flex gap-1 py-1">
-                  <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
-                  <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:75ms]" />
-                  <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:150ms]" />
+              <div className="bg-[#202c33] p-4 rounded-2xl rounded-bl-md shadow-sm">
+                <div className="flex gap-1">
+                  <span className="w-2 h-2 bg-[#00d95f] rounded-full animate-bounce"></span>
+                  <span className="w-2 h-2 bg-[#00d95f] rounded-full animate-bounce delay-75"></span>
+                  <span className="w-2 h-2 bg-[#00d95f] rounded-full animate-bounce delay-150"></span>
                 </div>
               </div>
+              <span className="text-xs text-[#8696a0] ml-2">正在输入...</span>
             </div>
           </div>
         )}
       </main>
 
       <footer
-        className="z-20 w-full border-t border-[#e5e5e5] bg-[#f7f7f7] px-3 py-2"
+        className="z-20 w-full bg-[#202c33] px-3 py-3"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 1rem)' }}
       >
         <form onSubmit={handleSend} className="flex items-center gap-3">
-          <button
-            type="button"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#181818] text-[#181818]"
-            aria-label="语音"
-          >
-            <span className="material-symbols-outlined !text-[20px] leading-none rotate-90" style={iconThinStyle}>
-              wifi_tethering
-            </span>
-          </button>
+          <VoiceInput 
+                onTextRecognized={(text) => {
+                    setInput((prev) => prev ? prev + text : text);
+                }} 
+            />
 
-          <div className="flex flex-1 items-center rounded-md bg-white px-3 py-[9px]">
+          <div className="flex flex-1 items-center rounded-full bg-[#2a3942] px-4 py-2.5 min-h-[44px]">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="输入消息"
-              className="w-full bg-transparent p-0 text-[16px] text-[#111711] focus:outline-none border-none h-5 leading-5"
+              placeholder="消息"
+              className="w-full bg-transparent p-0 text-[16px] text-[#e9edef] placeholder-[#8696a0] focus:outline-none border-none h-5 leading-5"
               disabled={loading}
             />
+            <button
+              type="button"
+              className="ml-2 p-1 text-[#8696a0] hover:text-[#e9edef] transition-colors"
+              aria-label="表情"
+            >
+              <span className="material-symbols-outlined !text-[20px]">sentiment_satisfied</span>
+            </button>
+            <button
+              type="button"
+              className="ml-1 p-1 text-[#8696a0] hover:text-[#e9edef] transition-colors"
+              aria-label="附件"
+            >
+              <span className="material-symbols-outlined !text-[20px]">attach_file</span>
+            </button>
           </div>
 
           <button
-            type="button"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#181818]"
-            aria-label="表情"
+            type="submit"
+            disabled={loading || !input.trim()}
+            className="h-11 w-11 shrink-0 rounded-full bg-[#00d95f] text-white flex items-center justify-center disabled:opacity-60 disabled:bg-[#8696a0] transition-all shadow-sm"
+            aria-label="发送"
           >
-            <span className="material-symbols-outlined !text-[32px] leading-none" style={iconThinStyle}>
-              sentiment_satisfied
-            </span>
+            <span className="material-symbols-outlined !text-[20px]">send</span>
           </button>
-
-          {input.trim() ? (
-            <button
-              type="submit"
-              disabled={loading}
-              className="h-8 px-3 shrink-0 rounded-md bg-[#07C160] text-white text-[14px] font-medium disabled:opacity-60"
-              aria-label="发送"
-            >
-              发送
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#181818] text-[#181818]"
-              aria-label="更多功能"
-            >
-              <span className="material-symbols-outlined !text-[22px] leading-none" style={iconThinStyle}>
-                add
-              </span>
-            </button>
-          )}
         </form>
       </footer>
     </div>

@@ -36,12 +36,13 @@ export default function Home() {
             </div>
             <h2 className="mt-5 text-xl font-semibold text-slate-900">我是患者</h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              微信风格会话列表与聊天界面，体验 AI 问诊追问与支付入口（演示）。
+              全新 WhatsApp 风格界面设计，深色主题聊天体验，支持语音输入与智能问诊。
             </p>
             <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-600">
-              <span className="rounded-full bg-blue-50 px-2 py-1">对话</span>
-              <span className="rounded-full bg-blue-50 px-2 py-1">追问采集</span>
-              <span className="rounded-full bg-blue-50 px-2 py-1">会诊触发</span>
+              <span className="rounded-full bg-blue-50 px-2 py-1">WhatsApp 风格</span>
+              <span className="rounded-full bg-blue-50 px-2 py-1">语音输入</span>
+              <span className="rounded-full bg-blue-50 px-2 py-1">智能追问</span>
+              <span className="rounded-full bg-blue-50 px-2 py-1">会诊支付</span>
             </div>
           </Link>
 

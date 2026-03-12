@@ -1,33 +1,129 @@
-import { ZhipuAI } from 'zhipuai';
+// 确保文件顶部有这个标记
+"use server";
 
-// 初始化 ZhipuAI 客户端
-const apiKey = process.env.ZHIPU_API_KEY;
-if (!apiKey) {
-  console.warn("警告: 未设置 ZHIPU_API_KEY 环境变量");
-}
+import OpenAI from 'openai';
+import { ZhipuAI } from 'zhipuai'; // 引入智谱 SDK
 
-const client = new ZhipuAI({
-  apiKey: apiKey || 'dummy', // 防止构建时报错，运行时必须有
+// ==========================================
+// 1. 客户端初始化 (双管齐下)
+// ==========================================
+
+// 海狮客户端：专职和患者聊天
+const seaLionClient = new OpenAI({
+  apiKey: process.env.SEALION_API_KEY,
+  baseURL: process.env.SEALION_BASE_URL,
 });
 
+// 智谱客户端：专职算向量、查知识库
+const zhipuClient = new ZhipuAI({
+  apiKey: process.env.ZHIPU_API_KEY,
+});
+
+
 /**
- * 获取文本的向量嵌入 (Embedding-3)
+ * 通用API调用重试函数，处理速率限制
  */
-export async function getEmbedding(text: string): Promise<number[]> {
+async function withRetry<T>(
+  operation: () => Promise<T>, 
+  maxRetries: number = 3
+): Promise<T> {
+  const baseDelay = 2000; // 2秒基础延迟
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      // 如果是速率限制错误且还有重试次数
+      if (error?.status === 429 && attempt < maxRetries) {
+        const delay = baseDelay * Math.pow(2, attempt); // 指数退避
+        console.log(`Rate limit hit (attempt ${attempt + 1}), waiting ${delay}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      // 其他错误或重试次数用完，抛出错误
+      throw error;
+    }
+  }
+  
+  throw new Error('Max retries exceeded');
+}
+
+export async function getMeralionUploadUrl(fileName: string, fileSize: number, contentType: string) {
+  const response = await fetch(`${process.env.MERALION_BASE_URL}/upload-url`, {
+    method: 'POST',
+    headers: {
+      'x-api-key': process.env.MERALION_API_KEY!,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      filename: fileName,
+      contentType: contentType,
+      filesize: fileSize
+    })
+  });
+  
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+  }
+  
+  const data = await response.json();
+  if (data.status.code !== 200) {
+    throw new Error(`获取上传链接失败: ${data.status.message}`);
+  }
+  
+  return {
+    url: data.response.url,
+    fileKey: data.response.key 
+  };
+}
+
+/**
+ * 步骤 3: 触发 MERaLion 语音转文字
+ */
+export async function transcribeAudioWithMeralion(fileKey: string) {
+  const response = await fetch(`${process.env.MERALION_BASE_URL}/transcribe`, {
+    method: 'POST',
+    headers: {
+      'x-api-key': process.env.MERALION_API_KEY!,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ key: fileKey }) 
+  });
+  
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+  }
+  
+  const data = await response.json();
+  if (data.status.code !== 200) {
+    throw new Error(`语音转写失败: ${data.status.message}`);
+  }
+  
+  return data.response.text; 
+}
+
+// ==========================================
+// 2. 向量生成模块 (交还给智谱)
+// ==========================================
+
+export async function getEmbedding(text: string) {
   try {
-    const response = await client.embeddings.create({
-      model: "embedding-3",
+    // 这里使用 zhipuClient，并指定智谱专属的 embedding-3 模型
+    const response = await zhipuClient.embeddings.create({
+      model: "embedding-3", 
       input: text,
     });
     return response.data[0].embedding;
   } catch (error) {
-    console.error("Embedding error:", error);
-    throw error;
+    console.error("智谱向量生成失败:", error);
+    // 如果智谱报错，返回 null 也能保证系统不崩溃，直接跳过知识库进行纯聊天
+    return null; 
   }
 }
 
 /**
- * 从医疗资料中提取关键事实 (GLM-4.7)
+ * 从医疗资料中提取关键事实 ()
  * 返回事实列表（字符串数组）
  */
 export async function extractFacts(textData: string): Promise<string[]> {
@@ -43,10 +139,12 @@ export async function extractFacts(textData: string): Promise<string[]> {
 ${textData}
 `;
 
-  const response = await client.chat.completions.create({
-    model: "glm-4-flash", // 使用 flash 或 plus/0520 等
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.1,
+  const response = await withRetry(async () => {
+    return await seaLionClient.chat.completions.create({
+      model: "aisingapore/Gemma-SEA-LION-v4-27B-IT", 
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.1,
+    });
   });
 
   const content = response.choices[0].message.content || "";
@@ -73,8 +171,8 @@ export async function extractKeywords(
 ${textData}
 `;
 
-  const response = await client.chat.completions.create({
-    model: 'glm-4-flash',
+  const response = await seaLionClient.chat.completions.create({
+    model: 'aisingapore/Gemma-SEA-LION-v4-27B-IT',
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.1,
   });
@@ -110,8 +208,8 @@ ${newInfo}
 请输出更新后的完整画像文本：
 `;
 
-  const response = await client.chat.completions.create({
-    model: "glm-4-flash",
+  const response = await seaLionClient.chat.completions.create({
+    model: "aisingapore/Gemma-SEA-LION-v4-27B-IT",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.5,
   });
@@ -128,7 +226,7 @@ export async function generateRAGResponse(
   persona: string,
     history: Array<{ role: 'user' | 'ai' | 'assistant' | 'doctor'; content: string }> = []
 ): Promise<string> {
-    type ZhipuMessage = { role: 'system' | 'user' | 'assistant'; content: string };
+    type Message = { role: 'system' | 'user' | 'assistant'; content: string };
   const systemPrompt = `
 你是一个医疗智能体。基于以下信息回答用户（患者）的问题。
 患者画像：${persona}
@@ -141,17 +239,17 @@ ${context}
 3. 避免给出危险的医疗建议，提示就医。
 `;
 
-    const messages: ZhipuMessage[] = [
+    const messages: Message[] = [
         { role: "system", content: systemPrompt },
-        ...history.map((msg): ZhipuMessage => ({
+        ...history.map((msg): Message => ({
             role: msg.role === 'user' ? 'user' : 'assistant',
             content: msg.content
         })),
         { role: "user", content: query }
     ];
 
-  const response = await client.chat.completions.create({
-    model: "glm-4-flash",
+  const response = await seaLionClient.chat.completions.create({
+    model: "aisingapore/Gemma-SEA-LION-v4-27B-IT",
         messages,
   });
 
@@ -165,7 +263,7 @@ export async function generateDoctorAssistantIntakeResponse(
   persona: string,
   history: Array<{ role: 'user' | 'ai' | 'assistant' | 'doctor'; content: string }> = []
 ): Promise<string> {
-  type ZhipuMessage = { role: 'system' | 'user' | 'assistant'; content: string };
+  type Message = { role: 'system' | 'user' | 'assistant'; content: string };
 
   const detectAnsweredSignals = (evidence: string) => {
     const e = evidence.replace(/\s+/g, '');
@@ -256,10 +354,10 @@ ${context}
 5. 口吻自然、简短，像真人助理在微信里提问。
 `;
 
-  const messages: ZhipuMessage[] = [
+  const messages: Message[] = [
     { role: 'system', content: systemPrompt },
     ...history.map(
-      (msg): ZhipuMessage => ({
+      (msg): Message => ({
         role: (msg.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
         content: msg.content,
       })
@@ -267,8 +365,8 @@ ${context}
     { role: 'user', content: query },
   ];
 
-  const response = await client.chat.completions.create({
-    model: 'glm-4-flash',
+  const response = await seaLionClient.chat.completions.create({
+    model: 'aisingapore/Gemma-SEA-LION-v4-27B-IT',
     messages,
     temperature: 0.4,
   });
@@ -332,8 +430,8 @@ ${relevantKnowledge}
 现在请直接输出“回复草稿”，不要标题，不要列表符号，不要引号。
 `;
 
-  const response = await client.chat.completions.create({
-    model: "glm-4-flash",
+  const response = await seaLionClient.chat.completions.create({
+    model: "aisingapore/Gemma-SEA-LION-v4-27B-IT",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.4,
   });
@@ -368,10 +466,12 @@ ${query}
 请仅输出类别代码：medical_consult 或 chitchat_admin
 `;
 
-  const response = await client.chat.completions.create({
-    model: "glm-4-flash",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.1,
+  const response = await withRetry(async () => {
+    return await seaLionClient.chat.completions.create({
+      model: "aisingapore/Gemma-SEA-LION-v4-27B-IT",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.1,
+    });
   });
 
   const result = response.choices[0].message.content?.trim();
@@ -393,8 +493,8 @@ ${relevantKnowledge}
 用户问题：${query}
 `;
 
-  const response = await client.chat.completions.create({
-    model: "glm-4-flash",
+  const response = await seaLionClient.chat.completions.create({
+    model: "aisingapore/Gemma-SEA-LION-v4-27B-IT",
     messages: [{ role: "user", content: prompt }],
   });
 
