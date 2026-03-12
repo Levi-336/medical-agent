@@ -109,30 +109,56 @@ class SoftKnowledgeRAGTool:
         with open(json_path, 'r', encoding='utf-8') as f:
             self.chunks = json.load(f)
 
-    def run(self, query: str, emotion: str = "neutral", top_k: int = 2) -> List[Dict[str, Any]]:
+    def run(self, query: str, patient_context: Optional[Dict[str, str]] = None, emotion: str = "neutral", top_k: int = 2) -> List[Dict[str, Any]]:
+        """
+        Standard execution entry point. 
+        Implements Metadata Filtering (Pre-filtering) followed by semantic scoring.
+        """
+        filtered_chunks = self.chunks
+        
+        # 1. Metadata Pre-filtering (The "Filter 99%" Logic)
+        if patient_context:
+            target_drug = patient_context.get("drug_name")
+            target_disease = patient_context.get("disease_type")
+            
+            # Use tags to filter out irrelevant documents before semantic search
+            if target_drug or target_disease:
+                filtered_chunks = [
+                    c for c in self.chunks 
+                    if (not target_drug or c['metadata'].get('target_drug') == target_drug or c['metadata'].get('target_drug') == "Any")
+                    and (not target_disease or c['metadata'].get('disease_type') == target_disease or c['metadata'].get('disease_type') == "General_Chronic")
+                ]
+
+        # 2. Semantic & Emotional Scoring on the remaining subset
         scored = []
-        # Simple weighted matching for demonstration (English Keywords)
-        keywords = ["miss", "forget", "plan", "diet", "anxious", "sad", "side effect", "work"]
-        for c in self.chunks:
+        keywords = ["miss", "forget", "plan", "diet", "anxious", "sad", "side effect", "work", "empty"]
+        for c in filtered_chunks:
             score = 0
             for kw in keywords:
                 if kw in query.lower() and kw in c['content'].lower():
                     score += 5
                 
             meta = c.get('metadata', {})
-            # Empathy Boost via MERaLiON
+            # Empathy Boost via MERaLiON emotion detect
             if meta.get('emotion_target') == emotion:
-                score += 15
-            # Semantic Intents
+                score += 20  # High weight for emotional alignment
+            
+            # Action Intent Matching
             if ("missed" in query.lower() or "forgot" in query.lower()) and meta.get('action') == "schedule_tomorrow_reminder":
-                score += 10
+                score += 15
             if "plan" in query.lower() and meta.get('action') == "generate_7_day_plan":
-                score += 10
+                score += 15
                 
             scored.append((score, c))
             
         scored.sort(key=lambda x: x[0], reverse=True)
-        return [{"content": res[1]['content'], "metadata": res[1].get('metadata', {})} for res in scored[:top_k]]
+        
+        # Return content WITH Citations (Source)
+        return [{
+            "content": res[1]['content'], 
+            "metadata": res[1].get('metadata', {}),
+            "citation": res[1]['metadata'].get('source', 'Clinical Guidelines')
+        } for res in scored[:top_k]]
 
 # ==========================================
 # 3. SEA-LION Demonstration Orchestrator (Hackathon Runner)
@@ -151,8 +177,9 @@ class SEALionOrchestrator:
         print(f"🧠 MERaLiON Input Emotion => [{patient.emotion.upper()}]")
         print(f"💬 Query: '{user_query}'")
 
-        # Generic Tool Call Interface Simulator
-        print(f"\n⚙️ [Agent calls Tool]: {self.safety_tool.name} (Schema validated)")
+        # [LAYER 1: Hard-Rule Rule Engine Interceptor]
+        # Bypasses LLM entirely to check safety against SQL database
+        print(f"\n🛡️ [Relational Logic Interceptor]: Checking Hard Rules for {patient.drug_name}")
         safety_res = self.safety_tool.run(patient)
         
         if safety_res["status"] == "danger":
@@ -160,21 +187,29 @@ class SEALionOrchestrator:
             print(f" -> Output to Patient: Please stop medication immediately. A priority red flag has been routed to your SingHealth clinician.")
             return
 
-        print(f"\n⚙️ [Agent calls Tool]: {self.rag_tool.name} (Query: {user_query}, Emotion: {patient.emotion})")
-        docs = self.rag_tool.run(user_query, patient.emotion)
+        # [LAYER 2: Fine-grained RAG with Metadata Filtering]
+        # Pass patient tags (drug/disease) to filter irrelevant docs first
+        print(f"\n🔍 [Enhanced RAG]: Filtering by Tags (Drug: {patient.drug_name}) & Retrieving Guideline Chunks...")
+        context_filter = {"drug_name": patient.drug_name, "disease_type": "T2_Diabetes" if "Metformin" in patient.drug_name else None}
+        docs = self.rag_tool.run(user_query, patient_context=context_filter, emotion=patient.emotion)
         
-        print("\n📝 [SEA-LION Synthesis Engine]: Formatting final empathetic response...")
+        # [LAYER 3: Response Synthesis with Structured Citations]
+        print("\n📝 [SEA-LION Synthesis Engine]: Formatting final empathetic response with citations...")
         final_answer = ""
+        citations = []
         for d in docs:
-            print(f"   -> Read Source: {d['metadata'].get('source')} (Score Boosted)")
-            final_answer += d['content'] + "\n"
+            print(f"   -> Retained Segment from: {d['citation']}")
+            final_answer += d['content'] + " "
+            citations.append(f"[{d['citation']}]")
             
             if d['metadata'].get('action') == "schedule_tomorrow_reminder":
                 self.action_queue.append("API_CALL: Schedule Medication Alarm (SG Time)")
             if d['metadata'].get('action') == "generate_7_day_plan":
                 self.action_queue.append("API_CALL: Generate 7-Day Low-GI Diet Plan (Hawker Friendly)")
 
-        print(f"\n🗣️ [Empathetic Output to Patient]:\n{final_answer.strip()}")
+        # Simulated response formatting (Agent usually does this)
+        final_output_text = f"{final_answer.strip()}\n\nSources: {', '.join(list(set(citations)))}"
+        print(f"\n🗣️ [Empathetic Output to Patient]:\n{final_output_text}")
         
         if self.action_queue:
             print("\n⚡ [System Actions Triggered]:")
