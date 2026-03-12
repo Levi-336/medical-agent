@@ -5,20 +5,20 @@
       "snomed_ct_code": "372567009"
     },
     "drug_name": "Metformin",
-    "indication": "Type 2 Diabetes (2型糖尿病)",
-    "standard_dosage": "每次 500 mg，随餐服用，每日 1-2 次 (500mg once/twice daily with meals)",
+    "indication": "Type 2 Diabetes Mellitus",
+    "standard_dosage": "500 mg orally, once or twice daily with meals",
     "max_daily_dosage": "2550 mg/day",
     "absolute_contraindications": [
-      "eGFR < 30 mL/min/1.73 m² (严重肾功能不全)",
-      "急慢性代谢性酸中毒（包括糖尿病酮症酸中毒）",
-      "严重肝功能不全",
-      "因心血管衰竭导致的组织缺氧状态"
+      "eGFR < 30 mL/min/1.73 m² (Severe Renal Impairment)",
+      "Acute or chronic metabolic acidosis, including diabetic ketoacidosis",
+      "Severe hepatic impairment",
+      "Hypoxic conditions (e.g., cardiac or respiratory failure)"
     ],
     "interaction_red_flags": [
-      "碘化造影剂 (Iodinated contrast media)",
-      "托吡酯 (Topiramate) 等碳酸酐酶抑制剂"
+      "Iodinated contrast media (risk of lactic acidosis)",
+      "Carbonic anhydrase inhibitors (e.g., Topiramate, Zonisamide)"
     ],
-    "missed_dose_rule": "如果漏服，请在记起时随餐补服；若已接近下次服药时间，则跳过漏服剂量，切勿一次服用双倍剂量。"
+    "missed_dose_rule": "Take the missed dose as soon as you remember with food. If it is almost time for your next dose, skip the missed dose. Do not double the dose."
   },
   {
     "drug_id": {
@@ -26,20 +26,20 @@
       "snomed_ct_code": "372600008"
     },
     "drug_name": "Amlodipine",
-    "indication": "Essential Hypertension (原发性高血压)",
-    "standard_dosage": "起始剂量 5 mg，每日 1 次 (5mg once daily)",
+    "indication": "Essential Hypertension",
+    "standard_dosage": "Initial dose 5 mg orally once daily",
     "max_daily_dosage": "10 mg/day",
     "absolute_contraindications": [
-      "对二氢吡啶类衍生物过敏",
-      "严重低血压",
-      "休克（包括心源性休克）",
-      "伴有血流动力学不稳定的心力衰竭"
+      "Hypersensitivity to dihydropyridine derivatives",
+      "Severe hypotension",
+      "Shock (including cardiogenic shock)",
+      "Hemodynamically unstable heart failure after acute myocardial infarction"
     ],
     "interaction_red_flags": [
-      "辛伐他汀 (Simvastatin) 合用时辛伐他汀剂量上限为20mg",
-      "CYP3A4 强抑制剂 (如酮康唑、伊曲康唑能显著增加血药浓度)"
+      "Simvastatin (Limit simvastatin dose to 20mg daily)",
+      "Strong CYP3A4 inhibitors (e.g., Ketoconazole, Itraconazole)"
     ],
-    "missed_dose_rule": "若漏服请尽快补服。若超过12小时才想起，跳过本次剂量，第二天按正常时间服药。"
+    "missed_dose_rule": "Take the missed dose as soon as you remember. If more than 12 hours have passed, skip the missed dose and return to your normal schedule."
   },
   {
     "drug_id": {
@@ -47,19 +47,19 @@
       "snomed_ct_code": "387083005"
     },
     "drug_name": "Atorvastatin",
-    "indication": "Hyperlipidemia (高脂血症)",
-    "standard_dosage": "每日一次，每次10-20mg (10-20mg once daily)",
+    "indication": "Hyperlipidemia / Cardiovascular Risk Reduction",
+    "standard_dosage": "10-20 mg orally once daily",
     "max_daily_dosage": "80 mg/day",
     "absolute_contraindications": [
-      "活动性肝病或无法解释的血清转氨酶持续升高",
-      "对本品任何成分过敏",
-      "孕妇及妊娠期、哺乳期妇女"
+      "Active liver disease or unexplained persistent elevations of serum transaminases",
+      "Hypersensitivity to any component of this medication",
+      "Pregnancy and breastfeeding"
     ],
     "interaction_red_flags": [
-      "克拉霉素、红霉素（增加肌病与横纹肌溶解风险）",
-      "大量饮用西柚汁 (Grapefruit juice会导致游离血药浓度成倍升高)"
+      "Clarithromycin, Erythromycin (Increased risk of myopathy/rhabdomyolysis)",
+      "Large quantities of Grapefruit Juice (Significantly increases blood concentration)"
     ],
-    "missed_dose_rule": "距下次服药时间若不足12小时，则跳过漏服剂量。严禁一次服用双倍剂量。"
+    "missed_dose_rule": "If it has been less than 12 hours since your missed dose, take it. Otherwise, skip the dose and wait until your next scheduled dose."
   },
   {
     "drug_id": {
@@ -67,20 +67,20 @@
       "snomed_ct_code": "387458008"
     },
     "drug_name": "Aspirin",
-    "indication": "Antiplatelet / CVD Prevention (冠心病/心血管及脑血管血栓预防)",
-    "standard_dosage": "每日一次，每次100mg，空腹服用 (100mg once daily, empty stomach)",
+    "indication": "Antiplatelet for Cardiovascular/Cerebrovascular Prophylaxis",
+    "standard_dosage": "100 mg orally once daily (Enteric-coated, preferably on an empty stomach)",
     "max_daily_dosage": "300 mg/day",
     "absolute_contraindications": [
-      "活动性消化性溃疡出血或消化道出血史",
-      "血友病或血小板减少症等凝血障碍",
-      "严重心功能衰竭",
-      "孕妇妊娠最后三个月"
+      "Active peptic ulcer or gastrointestinal bleeding",
+      "Coagulation disorders (e.g., Hemophilia, Thrombocytopenia)",
+      "Severe heart failure",
+      "Third trimester of pregnancy"
     ],
     "interaction_red_flags": [
-      "华法林、利伐沙班等其他抗凝药（出血风险极高）",
-      "布洛芬等不可逆非甾体抗炎药（减弱心血管保护作用）",
-      "甲氨蝶呤"
+      "Anticoagulants such as Warfarin or Rivaroxaban (Extreme bleeding risk)",
+      "Ibuprofen/NSAIDs (May reduce cardioprotective effect of aspirin)",
+      "Methotrexate"
     ],
-    "missed_dose_rule": "当天想起可立即补服；若第二天想起，只需按正常剂量服用当日药量，切勿加倍补服发生内出血危险。"
+    "missed_dose_rule": "Take the dose as soon as you remember on the same day. If you remember the next day, just take your regular dose. Never double the dose to prevent internal bleeding."
   }
 ]

@@ -111,19 +111,22 @@ class SoftKnowledgeRAGTool:
 
     def run(self, query: str, emotion: str = "neutral", top_k: int = 2) -> List[Dict[str, Any]]:
         scored = []
+        # Simple weighted matching for demonstration (English Keywords)
+        keywords = ["miss", "forget", "plan", "diet", "anxious", "sad", "side effect", "work"]
         for c in self.chunks:
             score = 0
-            for char in set(query):
-                if char in c['content']: score += 1
+            for kw in keywords:
+                if kw in query.lower() and kw in c['content'].lower():
+                    score += 5
                 
             meta = c.get('metadata', {})
             # Empathy Boost via MERaLiON
             if meta.get('emotion_target') == emotion:
                 score += 15
             # Semantic Intents
-            if "忘" in query and meta.get('action') == "schedule_tomorrow_reminder":
+            if ("missed" in query.lower() or "forgot" in query.lower()) and meta.get('action') == "schedule_tomorrow_reminder":
                 score += 10
-            if "计划" in query and meta.get('action') == "generate_7_day_plan":
+            if "plan" in query.lower() and meta.get('action') == "generate_7_day_plan":
                 score += 10
                 
             scored.append((score, c))
@@ -154,7 +157,7 @@ class SEALionOrchestrator:
         
         if safety_res["status"] == "danger":
             print(f"🚨 [HARD INTERCEPT]: RxNorm/SNOMED Safety Violation Detected!")
-            print(f" -> Output to Patient: Please stop medication immediately. A priority yellow flag has been routed to your SingHealth clinician.")
+            print(f" -> Output to Patient: Please stop medication immediately. A priority red flag has been routed to your SingHealth clinician.")
             return
 
         print(f"\n⚙️ [Agent calls Tool]: {self.rag_tool.name} (Query: {user_query}, Emotion: {patient.emotion})")
@@ -167,9 +170,9 @@ class SEALionOrchestrator:
             final_answer += d['content'] + "\n"
             
             if d['metadata'].get('action') == "schedule_tomorrow_reminder":
-                self.action_queue.append("API_CALL: Schedule Alarm for Tomorrow 08:00 AM (SG Time)")
+                self.action_queue.append("API_CALL: Schedule Medication Alarm (SG Time)")
             if d['metadata'].get('action') == "generate_7_day_plan":
-                self.action_queue.append("API_CALL: Generate 7-Day Hawker Centre Low-GI Diet Plan")
+                self.action_queue.append("API_CALL: Generate 7-Day Low-GI Diet Plan (Hawker Friendly)")
 
         print(f"\n🗣️ [Empathetic Output to Patient]:\n{final_answer.strip()}")
         
@@ -184,11 +187,11 @@ if __name__ == "__main__":
 
     # --- Demo 1: MERaLiON picks up frustration (Singapore Localized) ---
     p1 = PatientState(patient_id="SG-P001", drug_name="Metformin", current_dose_mg=500, egfr_value=90.0, emotion="frustrated")
-    orchestrator.execute_agent_turn(p1, "我已经很努力不吃甜食了，但血糖还是降不下来，气死我了！在新加坡外面吃东西太难控了！")
+    orchestrator.execute_agent_turn(p1, "I've been working so hard to avoid sugar, but my readings are still high! It's so hard to control when eating out in Singapore Hawker Centres!")
 
     # --- Demo 2: Standard Hard Safety Block ---
     p2 = PatientState(patient_id="SG-P002", drug_name="Atorvastatin", current_dose_mg=120, egfr_value=60.0, emotion="neutral")
-    orchestrator.execute_agent_turn(p2, "医生开了阿托伐他汀，我昨天为了快点降脂多吃了几颗。可以吗？")
+    orchestrator.execute_agent_turn(p2, "My doctor prescribed Atorvastatin. I took a few extra pills yesterday to lower my cholesterol faster. Is that okay?")
     
     # --- Demo 3: Clinician Summary View ---
     print("\n🩺 [Clinician Dashboard] Fetching pending alerts for SG-P002...")
