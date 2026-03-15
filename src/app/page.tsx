@@ -12,13 +12,14 @@ export default function Home() {
         <div className="mx-auto w-full max-w-3xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-xs text-slate-600 shadow-sm backdrop-blur">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            可跑通闭环 · 对话 / 画像 / 记忆 / 知识库 / 会诊（演示）
+            End-to-end demo flow: chat, persona, memory, knowledge base, and consultation
           </div>
           <h1 className="mt-5 text-balance text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-            医疗 AI 智能助手演示平台
+            Medical AI Assistant Demo Platform
           </h1>
           <p className="mt-4 text-balance text-base text-slate-600 sm:text-lg">
-            面向患者、医生助理、医生三种角色的端到端演示：从对话追问到记忆沉淀，再到会诊接入与医生侧可见。
+            An end-to-end demo for patients, assistants, and doctors, covering guided intake,
+            memory extraction, consultation handoff, and doctor-side visibility.
           </p>
         </div>
 
@@ -34,15 +35,16 @@ export default function Home() {
               </div>
               <ArrowRight className="h-5 w-5 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-400" />
             </div>
-            <h2 className="mt-5 text-xl font-semibold text-slate-900">我是患者</h2>
+            <h2 className="mt-5 text-xl font-semibold text-slate-900">I am a Patient</h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              全新 WhatsApp 风格界面设计，深色主题聊天体验，支持语音输入与智能问诊。
+              A WhatsApp-style dark interface with voice input and guided intake for patient-side
+              conversations.
             </p>
             <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-600">
-              <span className="rounded-full bg-blue-50 px-2 py-1">WhatsApp 风格</span>
-              <span className="rounded-full bg-blue-50 px-2 py-1">语音输入</span>
-              <span className="rounded-full bg-blue-50 px-2 py-1">智能追问</span>
-              <span className="rounded-full bg-blue-50 px-2 py-1">会诊支付</span>
+              <span className="rounded-full bg-blue-50 px-2 py-1">WhatsApp-style UI</span>
+              <span className="rounded-full bg-blue-50 px-2 py-1">Voice input</span>
+              <span className="rounded-full bg-blue-50 px-2 py-1">Smart follow-up</span>
+              <span className="rounded-full bg-blue-50 px-2 py-1">Consultation payment</span>
             </div>
           </Link>
 
@@ -57,15 +59,16 @@ export default function Home() {
               </div>
               <ArrowRight className="h-5 w-5 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-400" />
             </div>
-            <h2 className="mt-5 text-xl font-semibold text-slate-900">我是医生助理</h2>
+            <h2 className="mt-5 text-xl font-semibold text-slate-900">I am an Assistant</h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              管理患者档案、导入病历、维护知识库，查看关键词记忆与建议回复。
+              Manage patient records, import medical notes, maintain the knowledge base, and review
+              memory signals with AI suggestions.
             </p>
             <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-600">
-              <span className="rounded-full bg-emerald-50 px-2 py-1">患者画像</span>
-              <span className="rounded-full bg-emerald-50 px-2 py-1">记忆检索</span>
-              <span className="rounded-full bg-emerald-50 px-2 py-1">知识库</span>
-              <span className="rounded-full bg-emerald-50 px-2 py-1">AI建议</span>
+              <span className="rounded-full bg-emerald-50 px-2 py-1">Patient persona</span>
+              <span className="rounded-full bg-emerald-50 px-2 py-1">Memory retrieval</span>
+              <span className="rounded-full bg-emerald-50 px-2 py-1">Knowledge base</span>
+              <span className="rounded-full bg-emerald-50 px-2 py-1">AI suggestions</span>
             </div>
           </Link>
 
@@ -80,15 +83,16 @@ export default function Home() {
               </div>
               <ArrowRight className="h-5 w-5 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-400" />
             </div>
-            <h2 className="mt-5 text-xl font-semibold text-slate-900">我是医生</h2>
+            <h2 className="mt-5 text-xl font-semibold text-slate-900">I am a Doctor</h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              仅展示已支付会诊患者，可直接发消息并结束会话，便于演示闭环。
+              View paid consultations only, reply directly to patients, and close the consultation
+              when the demo flow is complete.
             </p>
             <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-600">
-              <span className="rounded-full bg-teal-50 px-2 py-1">已支付可见</span>
-              <span className="rounded-full bg-teal-50 px-2 py-1">AI建议</span>
-              <span className="rounded-full bg-teal-50 px-2 py-1">记忆</span>
-              <span className="rounded-full bg-teal-50 px-2 py-1">患者画像</span>
+              <span className="rounded-full bg-teal-50 px-2 py-1">Visible after payment</span>
+              <span className="rounded-full bg-teal-50 px-2 py-1">AI suggestions</span>
+              <span className="rounded-full bg-teal-50 px-2 py-1">Memory</span>
+              <span className="rounded-full bg-teal-50 px-2 py-1">Patient persona</span>
             </div>
           </Link>
         </div>
@@ -96,7 +100,7 @@ export default function Home() {
         <div className="mx-auto mt-10 w-full max-w-3xl">
           <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-center text-xs text-slate-600 shadow-sm backdrop-blur">
             <Info size={14} className="text-slate-500" />
-            <span>本地演示 · 页面入口仅用于体验与联调</span>
+            <span>Local demo entry points for experience testing and integration checks</span>
           </div>
         </div>
       </div>

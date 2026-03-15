@@ -19,14 +19,14 @@ export default async function PatientChatPage({ params }: PatientChatPageProps) 
           <div className="mb-6">
             <span className="material-symbols-outlined !text-[64px] text-[#54656f]">chat_bubble_outline</span>
           </div>
-          <div className="text-[18px] font-medium mb-3 text-[#e9edef]">未找到该会话</div>
-          <div className="text-[14px] text-[#8696a0] mb-6">请返回消息列表重新选择</div>
+          <div className="text-[18px] font-medium mb-3 text-[#e9edef]">Conversation not found</div>
+          <div className="text-[14px] text-[#8696a0] mb-6">Return to the message list and choose another chat.</div>
           <Link
             href="/patient"
             className="inline-flex items-center justify-center w-full bg-[#00d95f] text-white rounded-lg px-6 py-3 hover:bg-[#00c851] transition-colors font-medium"
           >
             <span className="material-symbols-outlined !text-[18px] mr-2">arrow_back</span>
-            返回消息列表
+            Back to messages
           </Link>
         </div>
       </div>
@@ -36,4 +36,3 @@ export default async function PatientChatPage({ params }: PatientChatPageProps) 
   const history = await getChatHistory(patient.id);
   return <PatientWeChatChat patient={patient} initialHistory={history} />;
 }
-

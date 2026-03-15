@@ -126,35 +126,23 @@ function extractMetrics(memories: MemoryLike[], chats: ChatLike[]) {
   };
 
   const scanText = (text: string, t: number) => {
-    const raw = text.replace(/\s+/g, ' ').trim();
+    const raw = text.replace(/\s+/g, ' ').trim().toLowerCase();
 
-    const mTemp = raw.match(/(\d{2}(?:\.\d)?)\s*℃/);
+    const mTemp = raw.match(/(\d{2}(?:\.\d)?)\s*(?:°c|c)/i);
     if (mTemp) addTemp(t, Number(mTemp[1]));
-    if (!mTemp && raw.includes('体温')) {
-      const m = raw.match(/体温[^\d]{0,6}(\d{2}(?:\.\d)?)/);
-      if (m) addTemp(t, Number(m[1]));
-    }
 
     const mBp = raw.match(/(\d{2,3})\s*\/\s*(\d{2,3})/);
-    if (mBp && (raw.includes('血压') || raw.includes('mmhg') || raw.includes('mmHg'))) {
+    if (mBp && (raw.includes('blood pressure') || raw.includes('mmhg'))) {
       addBp(t, Number(mBp[1]), Number(mBp[2]));
     }
-    if (!mBp && raw.includes('血压')) {
-      const m = raw.match(/血压[^\d]{0,10}(\d{2,3})\s*\/\s*(\d{2,3})/);
-      if (m) addBp(t, Number(m[1]), Number(m[2]));
-    }
 
-    const mG = raw.match(/(\d+(?:\.\d+)?)\s*(mmol\/l|mmol|毫摩尔)/i);
-    if (mG && raw.includes('血糖')) addGlucose(t, Number(mG[1]));
-    if (!mG && raw.includes('血糖')) {
-      const m = raw.match(/血糖[^\d]{0,10}(\d+(?:\.\d+)?)/);
-      if (m) addGlucose(t, Number(m[1]));
-    }
+    const mG = raw.match(/(\d+(?:\.\d+)?)\s*(mmol\/l|mmol)/i);
+    if (mG && raw.includes('glucose')) addGlucose(t, Number(mG[1]));
 
-    const mP = raw.match(/(心率|脉搏)[^\d]{0,10}(\d{2,3})/);
+    const mP = raw.match(/(heart rate|pulse)[^\d]{0,10}(\d{2,3})/i);
     if (mP) addPulse(t, Number(mP[2]));
-    const mP2 = raw.match(/(\d{2,3})\s*(次\/分|bpm)/i);
-    if (mP2 && raw.includes('心')) addPulse(t, Number(mP2[1]));
+    const mP2 = raw.match(/(\d{2,3})\s*(bpm)/i);
+    if (mP2 && raw.includes('heart')) addPulse(t, Number(mP2[1]));
   };
 
   for (const m of memories) {
@@ -203,9 +191,9 @@ function riskFromMetrics(metrics: ReturnType<typeof extractMetrics>) {
     (g != null && g >= 11.1) ||
     (p != null && p >= 100);
 
-  if (high) return { level: '高', cls: 'bg-rose-50 text-rose-700 border-rose-200', icon: 'text-rose-600' };
-  if (mid) return { level: '中', cls: 'bg-amber-50 text-amber-700 border-amber-200', icon: 'text-amber-600' };
-  return { level: '低', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: 'text-emerald-600' };
+  if (high) return { level: 'High', cls: 'bg-rose-50 text-rose-700 border-rose-200', icon: 'text-rose-600' };
+  if (mid) return { level: 'Medium', cls: 'bg-amber-50 text-amber-700 border-amber-200', icon: 'text-amber-600' };
+  return { level: 'Low', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: 'text-emerald-600' };
 }
 
 function MetricCard({
@@ -256,15 +244,15 @@ export default function PatientOverview({
   const bpSys = metrics.bp.slice(-12).map((x) => x.sys);
   const bpDia = metrics.bp.slice(-12).map((x) => x.dia);
 
-  const tempText = metrics.latestTemp ? `${metrics.latestTemp.v.toFixed(1)}℃` : '—';
-  const glucoseText = metrics.latestGlucose ? `${metrics.latestGlucose.v.toFixed(1)} mmol/L` : '—';
-  const pulseText = metrics.latestPulse ? `${Math.round(metrics.latestPulse.v)} bpm` : '—';
-  const bpText = metrics.latestBp ? `${metrics.latestBp.sys}/${metrics.latestBp.dia}` : '—';
+  const tempText = metrics.latestTemp ? `${metrics.latestTemp.v.toFixed(1)}°C` : '-';
+  const glucoseText = metrics.latestGlucose ? `${metrics.latestGlucose.v.toFixed(1)} mmol/L` : '-';
+  const pulseText = metrics.latestPulse ? `${Math.round(metrics.latestPulse.v)} bpm` : '-';
+  const bpText = metrics.latestBp ? `${metrics.latestBp.sys}/${metrics.latestBp.dia}` : '-';
 
   const riskText =
     metrics.latestTemp || metrics.latestBp || metrics.latestGlucose || metrics.latestPulse
-      ? `风险等级：${risk.level}`
-      : '暂无可用指标';
+      ? `Risk level: ${risk.level}`
+      : 'No metric data available';
 
   const completeness = clamp(
     [metrics.latestTemp, metrics.latestBp, metrics.latestGlucose, metrics.latestPulse].filter(Boolean).length / 4,
@@ -276,31 +264,31 @@ export default function PatientOverview({
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <MetricCard
-          title="体温"
+          title="Temperature"
           icon={<Thermometer size={14} className="text-rose-500" />}
           value={tempText}
-          sub={metrics.temp.length ? `记录 ${metrics.temp.length} 条` : undefined}
+          sub={metrics.temp.length ? `${metrics.temp.length} records` : undefined}
           chart={<Sparkline values={tempValues} strokeClassName="stroke-rose-500" />}
         />
         <MetricCard
-          title="血压"
+          title="Blood pressure"
           icon={<Gauge size={14} className="text-emerald-600" />}
           value={bpText}
-          sub={metrics.bp.length ? `记录 ${metrics.bp.length} 条` : undefined}
+          sub={metrics.bp.length ? `${metrics.bp.length} records` : undefined}
           chart={<DualSparkline a={bpSys} b={bpDia} />}
         />
         <MetricCard
-          title="血糖"
+          title="Glucose"
           icon={<Droplets size={14} className="text-sky-600" />}
           value={glucoseText}
-          sub={metrics.glucose.length ? `记录 ${metrics.glucose.length} 条` : undefined}
+          sub={metrics.glucose.length ? `${metrics.glucose.length} records` : undefined}
           chart={<Sparkline values={glucoseValues} strokeClassName="stroke-sky-600" />}
         />
         <MetricCard
-          title="心率"
+          title="Heart rate"
           icon={<Activity size={14} className="text-violet-600" />}
           value={pulseText}
-          sub={metrics.pulse.length ? `记录 ${metrics.pulse.length} 条` : undefined}
+          sub={metrics.pulse.length ? `${metrics.pulse.length} records` : undefined}
           chart={<Sparkline values={pulseValues} strokeClassName="stroke-violet-600" />}
         />
       </div>
@@ -308,14 +296,14 @@ export default function PatientOverview({
       <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-xs font-semibold text-slate-600">数据概览</div>
+            <div className="text-xs font-semibold text-slate-600">Data overview</div>
             <div className="mt-1 flex items-center gap-2">
               <span className={cn('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs', risk.cls)}>
                 <TriangleAlert size={12} className={risk.icon} />
                 {riskText}
               </span>
               <span className="text-xs text-slate-500">
-                采集完整度 {(completeness * 100).toFixed(0)}%
+                Completion {(completeness * 100).toFixed(0)}%
               </span>
             </div>
           </div>
@@ -331,13 +319,13 @@ export default function PatientOverview({
 
         <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600">
           <div className="rounded bg-slate-50 p-2">
-            <div className="text-slate-400">主诉/标签</div>
-            <div className="mt-0.5 text-slate-700">{patient.condition || '—'}</div>
+            <div className="text-slate-400">Chief concern / tags</div>
+            <div className="mt-0.5 text-slate-700">{patient.condition || '-'}</div>
           </div>
           <div className="rounded bg-slate-50 p-2">
-            <div className="text-slate-400">基本信息</div>
+            <div className="text-slate-400">Basic info</div>
             <div className="mt-0.5 text-slate-700">
-              {(patient.gender || '—') + ' · ' + (patient.age != null ? `${patient.age}岁` : '—')}
+              {(patient.gender || '-') + ' / ' + (patient.age != null ? `${patient.age} yrs` : '-')}
             </div>
           </div>
         </div>

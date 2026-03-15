@@ -7,7 +7,6 @@ import { Home, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import VoiceInput from "@/components/patient/VoiceInput";
 
-
 interface PatientChatProps {
   patients: Patient[];
 }
@@ -16,25 +15,25 @@ type PatientVisibleRole = 'user' | 'assistant' | 'doctor' | 'ai';
 
 function formatAiQuestions(content: string) {
   return content
-    .replace(/([?？])(?!\s*\n)/g, '$1\n')
+    .replace(/([?.!])(?!\s*\n)/g, '$1\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
 function formatPatientVisibleContent(role: PatientVisibleRole, content: string) {
   const trimmed = content.trim();
-  if (/^【(医生|医生助理|AI自动回复)】/.test(trimmed)) return content;
+  if (/^\[(Doctor|Assistant|AI Auto Reply)\]/.test(trimmed)) return content;
 
   if (role === 'assistant') {
     const c = formatAiQuestions(content);
-    return `【医生助理】 ${c}\n（AI生成内容，仅供参考，请注意甄别）`;
+    return `[Assistant] ${c}\n(AI-generated content for reference only)`;
   }
   if (role === 'ai') {
     const c = formatAiQuestions(content);
-    return `【AI自动回复】 ${c}\n（AI生成内容，仅供参考，请注意甄别）`;
+    return `[AI Auto Reply] ${c}\n(AI-generated content for reference only)`;
   }
   if (role === 'doctor') {
-    return `【医生】 ${content}`;
+    return `[Doctor] ${content}`;
   }
   return content;
 }
@@ -58,7 +57,7 @@ export default function PatientChat({ patients }: PatientChatProps) {
   const [messages, setMessages] = useState<{ id: string; role: PatientVisibleRole; content: string }[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [voiceProcessing, setVoiceProcessing] = useState(false); // 新增状态：语音处理中
+  const [voiceProcessing, setVoiceProcessing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -76,7 +75,6 @@ export default function PatientChat({ patients }: PatientChatProps) {
   }, [selectedPatientId]);
 
   useEffect(() => {
-    // Scroll to bottom
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
@@ -101,7 +99,6 @@ export default function PatientChat({ patients }: PatientChatProps) {
     setInput('');
     setLoading(true);
 
-    // Optimistic update
     const tempId = Date.now().toString();
     setMessages(prev => [...prev, { id: tempId, role: 'user', content: userMsg }]);
 
@@ -113,144 +110,140 @@ export default function PatientChat({ patients }: PatientChatProps) {
           content: m.content,
         })
       );
-      
+
       const result = await processUserMessage(selectedPatientId, userMsg, historyForAI);
-      
-      // If result.response is empty (e.g. medical consult that shouldn't have auto reply), 
-      // we don't add an AI message.
       if (result.response) {
-          setMessages(prev => [...prev, { id: (Date.now()+1).toString(), role: 'ai', content: result.response }]);
+        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'ai', content: result.response }]);
       }
     } catch (err) {
       console.error(err);
-      alert('发送失败');
+      alert('Failed to send message.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleVoiceInput = (text: string) => {
-    // 显示确认框让用户确认语音识别结果
-    const confirmed = window.confirm(`语音识别结果："${text}"\n是否将其添加到输入框？`);
+    const confirmed = window.confirm(`Speech recognition result: "${text}"\nAdd it to the input box?`);
     if (confirmed) {
       setInput((prev) => (prev ? prev + text : text));
     }
-    setVoiceProcessing(false); // 语音处理完成
+    setVoiceProcessing(false);
   };
 
   if (patients.length === 0) {
-    return <div className="p-8 text-center text-slate-500">请先在医生助理端创建患者</div>;
+    return <div className="p-8 text-center text-slate-500">Please create a patient in the assistant portal first.</div>;
   }
 
   return (
     <div className="flex flex-col h-screen bg-[#0f1419] max-w-md mx-auto shadow-2xl overflow-hidden border-x border-[#313d44] whatsapp-theme">
-        {/* Status bar mockup */}
-        <div className="h-[44px] w-full bg-[#202c33] sticky top-0 z-20 shrink-0 flex items-center justify-center">
-          <div className="w-[134px] h-[20px] bg-black rounded-full"></div>
+      <div className="h-[44px] w-full bg-[#202c33] sticky top-0 z-20 shrink-0 flex items-center justify-center">
+        <div className="w-[134px] h-[20px] bg-black rounded-full"></div>
+      </div>
+
+      <div className="bg-[#202c33] p-4 shadow-sm z-10 border-b border-[#313d44] flex justify-between items-center gap-2">
+        <div className="flex-1">
+          <label className="block text-xs font-medium text-[#8696a0] mb-2">Current simulated identity</label>
+          <select
+            className="w-full p-2.5 border border-[#313d44] rounded-lg text-sm bg-[#2a3942] text-[#e9edef] focus:outline-none focus:border-[#00d95f] transition-colors"
+            value={selectedPatientId}
+            onChange={(e) => setSelectedPatientId(e.target.value)}
+          >
+            {patients.map(p => (
+              <option key={p.id} value={p.id} className="bg-[#2a3942] text-[#e9edef]">
+                {p.name} ({p.gender || '-'}, {p.age != null ? `${p.age} yrs` : '-'})
+              </option>
+            ))}
+          </select>
         </div>
-        
-        {/* Header */}
-        <div className="bg-[#202c33] p-4 shadow-sm z-10 border-b border-[#313d44] flex justify-between items-center gap-2">
-            <div className="flex-1">
-                <label className="block text-xs font-medium text-[#8696a0] mb-2">当前模拟身份</label>
-                <select 
-                    className="w-full p-2.5 border border-[#313d44] rounded-lg text-sm bg-[#2a3942] text-[#e9edef] focus:outline-none focus:border-[#00d95f] transition-colors"
-                    value={selectedPatientId}
-                    onChange={(e) => setSelectedPatientId(e.target.value)}
-                >
-                    {patients.map(p => (
-                        <option key={p.id} value={p.id} className="bg-[#2a3942] text-[#e9edef]">
-                          {p.name} ({p.gender || '—'}, {p.age != null ? `${p.age}岁` : '—'})
-                        </option>
-                    ))}
-                </select>
+        <Link
+          href="/"
+          className="flex flex-col items-center justify-center p-2 text-[#8696a0] hover:text-[#e9edef] hover:bg-[#2a3942] rounded-lg transition text-xs"
+          title="Back to home"
+        >
+          <Home size={20} />
+          <span className="scale-90 mt-0.5">Home</span>
+        </Link>
+      </div>
+
+      <div
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0f1419]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='a' patternUnits='userSpaceOnUse' width='20' height='20' patternTransform='scale(0.5) rotate(0)'%3e%3crect x='0' y='0' width='100%25' height='100%25' fill='hsla(0, 0%25, 100%25, 0)'/%3e%3cpath d='M 10,-2.55e-7 V 20 Z M -1.1677362e-8,10 H 20 Z' stroke-width='0.2' stroke='hsla(0, 0%25, 100%25, 0.01)' fill='none'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100%25' height='100%25' fill='url(%23a)'/%3e%3c/svg%3e")`,
+        }}
+        ref={scrollRef}
+      >
+        {messages.length === 0 ? (
+          <div className="text-center text-[#8696a0] mt-10 space-y-2">
+            <div className="mb-4">
+              <span className="material-symbols-outlined !text-[64px] text-[#54656f]">chat_bubble_outline</span>
             </div>
-            <Link 
-                href="/" 
-                className="flex flex-col items-center justify-center p-2 text-[#8696a0] hover:text-[#e9edef] hover:bg-[#2a3942] rounded-lg transition text-xs"
-                title="返回首页"
-            >
-                <Home size={20} />
-                <span className="scale-90 mt-0.5">首页</span>
-            </Link>
-        </div>
-
-        {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0f1419]" 
-             style={{
-               backgroundImage: `url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='a' patternUnits='userSpaceOnUse' width='20' height='20' patternTransform='scale(0.5) rotate(0)'%3e%3crect x='0' y='0' width='100%25' height='100%25' fill='hsla(0, 0%25, 100%25, 0)'/%3e%3cpath d='M 10,-2.55e-7 V 20 Z M -1.1677362e-8,10 H 20 Z' stroke-width='0.2' stroke='hsla(0, 0%25, 100%25, 0.01)' fill='none'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100%25' height='100%25' fill='url(%23a)'/%3e%3c/svg%3e")`,
-             }}
-             ref={scrollRef}>
-            {messages.length === 0 ? (
-                <div className="text-center text-[#8696a0] mt-10 space-y-2">
-                    <div className="mb-4">
-                      <span className="material-symbols-outlined !text-[64px] text-[#54656f]">chat_bubble_outline</span>
-                    </div>
-                    <p className="text-[16px]">开始与医生对话</p>
-                    <p className="text-[13px] text-[#667781]">选择身份后发送消息开始咨询</p>
-                </div>
-            ) : (
-                messages.map(msg => (
-                    <div key={msg.id} className={cn("flex", msg.role === 'user' ? "justify-end" : "justify-start")}>
-                        <div className={cn(
-                            "max-w-[85%] px-3 py-2.5 rounded-2xl text-[15px] shadow-sm whitespace-pre-wrap",
-                            msg.role === 'user' 
-                                ? "bg-[#005c4b] text-[#e9edef] rounded-br-md" 
-                                : "bg-[#202c33] text-[#e9edef] rounded-bl-md"
-                        )}>
-                            {renderContentWithPayLink(formatPatientVisibleContent(msg.role, msg.content))}
-                        </div>
-                    </div>
-                ))
-            )}
-            {loading && (
-                <div className="flex justify-start">
-                    <div className="bg-[#202c33] p-4 rounded-2xl rounded-bl-md shadow-sm">
-                        <div className="flex gap-1">
-                            <span className="w-2 h-2 bg-[#00d95f] rounded-full animate-bounce"></span>
-                            <span className="w-2 h-2 bg-[#00d95f] rounded-full animate-bounce delay-75"></span>
-                            <span className="w-2 h-2 bg-[#00d95f] rounded-full animate-bounce delay-150"></span>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-
-        {/* Input Area */}
-        <form onSubmit={handleSend} className="bg-[#202c33] p-4 flex items-center gap-3">
-            <VoiceInput 
-                onTextRecognized={(text) => {
-                    setVoiceProcessing(true); // 设置语音处理中状态
-                    handleVoiceInput(text);
-                }} 
-            />
-
-            <div className="flex-1 flex items-center rounded-full bg-[#2a3942] px-4 py-2.5 min-h-[44px]">
-                <input 
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder={voiceProcessing ? "语音处理中..." : "消息"} 
-                    className="flex-1 bg-transparent text-[16px] text-[#e9edef] placeholder-[#8696a0] focus:outline-none border-none"
-                    disabled={loading || voiceProcessing}
-                />
-                <button
-                  type="button"
-                  className="ml-2 p-1 text-[#8696a0] hover:text-[#e9edef] transition-colors"
-                  aria-label="表情"
-                >
-                  <span className="material-symbols-outlined !text-[20px]">sentiment_satisfied</span>
-                </button>
+            <p className="text-[16px]">Start chatting with the doctor</p>
+            <p className="text-[13px] text-[#667781]">Choose an identity and send a message to begin</p>
+          </div>
+        ) : (
+          messages.map(msg => (
+            <div key={msg.id} className={cn("flex", msg.role === 'user' ? "justify-end" : "justify-start")}>
+              <div
+                className={cn(
+                  "max-w-[85%] px-3 py-2.5 rounded-2xl text-[15px] shadow-sm whitespace-pre-wrap",
+                  msg.role === 'user'
+                    ? "bg-[#005c4b] text-[#e9edef] rounded-br-md"
+                    : "bg-[#202c33] text-[#e9edef] rounded-bl-md"
+                )}
+              >
+                {renderContentWithPayLink(formatPatientVisibleContent(msg.role, msg.content))}
+              </div>
             </div>
+          ))
+        )}
+        {loading && (
+          <div className="flex justify-start">
+            <div className="bg-[#202c33] p-4 rounded-2xl rounded-bl-md shadow-sm">
+              <div className="flex gap-1">
+                <span className="w-2 h-2 bg-[#00d95f] rounded-full animate-bounce"></span>
+                <span className="w-2 h-2 bg-[#00d95f] rounded-full animate-bounce delay-75"></span>
+                <span className="w-2 h-2 bg-[#00d95f] rounded-full animate-bounce delay-150"></span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
-            <button 
-                type="submit" 
-                disabled={loading || !input.trim()}
-                className="h-11 w-11 shrink-0 rounded-full bg-[#00d95f] text-white flex items-center justify-center disabled:opacity-60 disabled:bg-[#8696a0] transition-all shadow-sm"
-                aria-label="发送"
-            >
-                <Send size={20} />
-            </button>
-        </form>
+      <form onSubmit={handleSend} className="bg-[#202c33] p-4 flex items-center gap-3">
+        <VoiceInput
+          onTextRecognized={(text) => {
+            setVoiceProcessing(true);
+            handleVoiceInput(text);
+          }}
+        />
+
+        <div className="flex-1 flex items-center rounded-full bg-[#2a3942] px-4 py-2.5 min-h-[44px]">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={voiceProcessing ? "Processing voice..." : "Message"}
+            className="flex-1 bg-transparent text-[16px] text-[#e9edef] placeholder-[#8696a0] focus:outline-none border-none"
+            disabled={loading || voiceProcessing}
+          />
+          <button
+            type="button"
+            className="ml-2 p-1 text-[#8696a0] hover:text-[#e9edef] transition-colors"
+            aria-label="Emoji"
+          >
+            <span className="material-symbols-outlined !text-[20px]">sentiment_satisfied</span>
+          </button>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading || !input.trim()}
+          className="h-11 w-11 shrink-0 rounded-full bg-[#00d95f] text-white flex items-center justify-center disabled:opacity-60 disabled:bg-[#8696a0] transition-all shadow-sm"
+          aria-label="Send"
+        >
+          <Send size={20} />
+        </button>
+      </form>
     </div>
   );
 }

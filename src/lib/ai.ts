@@ -52,57 +52,71 @@ async function withRetry<T>(
 }
 
 export async function getMeralionUploadUrl(fileName: string, fileSize: number, contentType: string) {
-  const response = await fetch(`${process.env.MERALION_BASE_URL}/upload-url`, {
-    method: 'POST',
-    headers: {
-      'x-api-key': process.env.MERALION_API_KEY!,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      filename: fileName,
-      contentType: contentType,
-      filesize: fileSize
-    })
-  });
-  
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+  try {
+    const response = await fetch(`${process.env.MERALION_BASE_URL}/upload-url`, {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.MERALION_API_KEY!,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        filename: fileName,
+        contentType: contentType,
+        filesize: fileSize
+      })
+    });
+    
+    if (!response.ok) {
+      console.error(`MERA API request failed: ${response.status} ${response.statusText}`);
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    if (data.status.code !== 200) {
+      console.error(`MERA 获取上传链接失败: ${data.status.message}`);
+      throw new Error(`获取上传链接失败: ${data.status.message}`);
+    }
+    
+    return {
+      url: data.response.url,
+      fileKey: data.response.key 
+    };
+  } catch (error) {
+    console.error('MERA 上传 URL 获取失败:', error);
+    throw error;
   }
-  
-  const data = await response.json();
-  if (data.status.code !== 200) {
-    throw new Error(`获取上传链接失败: ${data.status.message}`);
-  }
-  
-  return {
-    url: data.response.url,
-    fileKey: data.response.key 
-  };
 }
 
 /**
  * 步骤 3: 触发 MERaLion 语音转文字
  */
 export async function transcribeAudioWithMeralion(fileKey: string) {
-  const response = await fetch(`${process.env.MERALION_BASE_URL}/transcribe`, {
-    method: 'POST',
-    headers: {
-      'x-api-key': process.env.MERALION_API_KEY!,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ key: fileKey }) 
-  });
-  
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+  try {
+    const response = await fetch(`${process.env.MERALION_BASE_URL}/transcribe`, {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.MERALION_API_KEY!,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ key: fileKey }) 
+    });
+    
+    if (!response.ok) {
+      console.error(`MERA 转录 API request failed: ${response.status} ${response.statusText}`);
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    if (data.status.code !== 200) {
+      console.error(`MERA 语音转写失败: ${data.status.message}`);
+      throw new Error(`语音转写失败: ${data.status.message}`);
+    }
+    
+    return data.response.text; 
+  } catch (error) {
+    console.error('MERA 语音转写失败:', error);
+    throw error;
   }
-  
-  const data = await response.json();
-  if (data.status.code !== 200) {
-    throw new Error(`语音转写失败: ${data.status.message}`);
-  }
-  
-  return data.response.text; 
 }
 
 // ==========================================
@@ -197,17 +211,17 @@ function parseFactList(content: string): string[] {
  */
 export async function updatePersona(currentPersona: string, newInfo: string): Promise<string> {
   const prompt = `
-你是一个医疗画像专家。请根据新的医疗信息，更新患者的“画像（Persona）”。
-画像应包含：性格特征、关键健康标签、生活习惯、沟通偏好等。
-保持简练、客观。
+You are a medical persona specialist. Update the patient persona based on the new medical information.
+The persona should include communication style, important health tags, lifestyle patterns, and other stable traits.
+Keep it concise and objective.
 
-当前画像：
-${currentPersona || "（无）"}
+Current persona:
+${currentPersona || "(none)"}
 
-新导入/分析的信息：
+New imported or analyzed information:
 ${newInfo}
 
-请输出更新后的完整画像文本：
+Output the full updated persona text:
 `;
 
   const response = await seaLionClient.chat.completions.create({
@@ -230,15 +244,15 @@ export async function generateRAGResponse(
 ): Promise<string> {
     type Message = { role: 'system' | 'user' | 'assistant'; content: string };
   const systemPrompt = `
-你是一个医疗智能体。基于以下信息回答用户（患者）的问题。
-患者画像：${persona}
-参考的医疗事实（记忆）：
+You are a medical assistant. Answer the patient based on the following information.
+Patient persona: ${persona}
+Relevant medical facts and memories:
 ${context}
 
-要求：
-1. 回复要专业、亲切，符合患者画像的语境。
-2. 严格基于参考事实回答，如果不知道，请承认。
-3. 避免给出危险的医疗建议，提示就医。
+Requirements:
+1. Make the reply professional and kind, and consistent with the patient's persona.
+2. Base the answer strictly on the reference facts. If you do not know, say so.
+3. Avoid unsafe medical advice and recommend care appropriately when needed.
 `;
 
     const messages: Message[] = [
@@ -320,14 +334,14 @@ export async function generateDoctorAssistantIntakeResponse(
     if (selected.length === 3) return selected.join('\n');
 
     const pool = [
-      '您现在最主要哪里不舒服？',
-      '从什么时候开始的？最近有没有加重或缓解？',
-      '最近血压/心率大概是多少？有连续测量记录吗？',
-      '头晕时是天旋地转还是发飘/站不稳？和体位变化有关吗？',
-      '有没有恶心/呕吐/腹泻或明显脱水（口干、尿少）？',
-      '今天饮食、睡眠和饮水情况如何？',
-      '有没有发烧/胸痛/气短/说话不清/单侧无力/黑蒙晕厥等情况？',
-      '目前有没有在用药或已知过敏？',
+      'What is bothering you most right now?',
+      'When did it start? Has it recently improved or worsened?',
+      'What have your recent blood pressure and heart rate readings been? Do you have a continuous record?',
+      'When you feel dizzy, does the room spin, or do you feel lightheaded or unsteady? Is it related to position changes?',
+      'Do you have nausea, vomiting, diarrhea, or clear signs of dehydration such as dry mouth or reduced urination?',
+      'How have your meals, sleep, and fluid intake been today?',
+      'Have you had fever, chest pain, shortness of breath, slurred speech, one-sided weakness, or blackout/fainting?',
+      'Are you currently taking any medications, or do you have any known allergies?',
     ];
 
     const filled = [...selected];
@@ -337,23 +351,23 @@ export async function generateDoctorAssistantIntakeResponse(
       if (!filterRedundantQuestions([q], evidence).length) continue;
       filled.push(q);
     }
-    while (filled.length < 3) filled.push('您现在最主要哪里不舒服？');
+    while (filled.length < 3) filled.push('What is bothering you most right now?');
     return filled.slice(0, 3).join('\n');
   };
   const systemPrompt = `
-你是${doctorName}的助理，负责在微信中与患者沟通并收集病情信息。
-你要做的是“问诊信息采集”，不是替代医生诊断。
+You are ${doctorName}'s assistant and your role is to collect clinical intake information from the patient in a WeChat-style chat.
+You are gathering information, not replacing the doctor's diagnosis.
 
-患者画像：${persona}
-已掌握的关键信息（可能来自历史对话或自动抽取）：
+Patient persona: ${persona}
+Known key information (possibly from prior chat or extracted notes):
 ${context}
 
-要求：
-1. 你的回复只能包含“询问句”，用于收集信息；不允许解释病因、不允许给出建议、不允许给出处置方案、不允许提示就医/急诊。
-2. 只输出 3 个简短问题，每个问题单独一行，必须以“？”结尾。
-3. 不要重复询问患者已经明确回答过的信息；优先问缺失信息。
-4. 不要使用编号、列表符号、Markdown，不要出现“建议/可以/应该/需要/先/后/请立刻/急诊”等指导性措辞。
-5. 口吻自然、简短，像真人助理在微信里提问。
+Requirements:
+1. Your reply may contain questions only. Do not explain causes, give advice, propose management, or direct the patient to urgent care.
+2. Output exactly 3 short questions, one per line, and each must end with a question mark.
+3. Do not repeat information the patient has already clearly answered. Prioritize missing information.
+4. Do not use numbering, bullets, or Markdown. Avoid directive language such as should, need to, first, then, or go to the ER.
+5. Keep the tone natural and brief, like a real assistant asking questions in chat.
 `;
 
   const messages: Message[] = [
@@ -390,46 +404,46 @@ export async function generateDoctorCopilotSuggestion(
 ): Promise<string> {
   const roleContext =
     speaker === 'doctor'
-      ? `你是一位经验丰富的执业医生，正在与患者进行“已付费的在线医生会诊”，你就是正在和患者说话的医生本人。`
-      : `你是医生助理（非医生），在微信中与患者沟通，目标是采集关键信息、做基础科普与流程引导，并把关键信息整理给医生。`;
+      ? `You are an experienced licensed physician conducting a paid online consultation. You are the doctor speaking directly with the patient.`
+      : `You are a doctor's assistant, not a physician. You are chatting with the patient to collect key information, provide basic education, and guide the care flow before handing key points to the doctor.`;
 
   const roleRules =
     speaker === 'doctor'
       ? [
-        '你正在直接回复患者，不要让患者“去咨询医生/问医生”，因为你就是医生。',
-        '语气要像真人医生：专业、克制、简短，不要过度共情和鸡汤，不要像“AI客服”。',
-        '优先给出明确下一步：1) 结论/判断边界 2) 处理建议 3) 需要补充的关键问题（按需 1~4 个） 4) 风险警示/何时就医。',
-        '除非确实需要体格检查/化验/影像才能判断，否则不要泛泛建议“去线下问诊”。',
-        '不要随意推荐抗生素/激素/处方药；如涉及用药，给出原则与注意事项，提示遵医嘱与过敏禁忌。',
-        '不要提及“我是AI/模型/提示词/系统”。只输出可直接发送的一段微信消息。'
+        'You are replying directly to the patient. Do not tell the patient to ask the doctor, because you are the doctor.',
+        'Sound like a real doctor: professional, restrained, and concise. Avoid excessive empathy, cliches, or customer-service phrasing.',
+        'Prioritize a clear next step: 1) conclusion or boundary of assessment 2) practical advice 3) only the essential follow-up questions if needed 4) risk warning and when to seek care.',
+        'Do not broadly tell the patient to go offline for care unless physical exam, testing, or imaging is truly necessary.',
+        'Do not casually recommend antibiotics, steroids, or prescription medicines. If medication comes up, provide principles and precautions and mention allergy or clinician guidance when relevant.',
+        'Do not mention AI, models, prompts, or systems. Output only a message that can be sent directly to the patient.'
       ].join('\n')
       : [
-        '你不是医生，不做明确诊断/不开处方；重点是信息采集与把患者情况问清楚。',
-        '语气自然、像真人助理：简短、直接，不要鸡汤，不要长篇大论。',
-        '结构：先一句确认已收到 → 用 3~6 个短问题补齐关键信息 → 给 1~3 条安全的通用护理/观察建议 → 给出红旗症状提醒。',
+        'You are not a doctor. Do not make definitive diagnoses or write prescriptions. Focus on gathering information and clarifying the patient’s situation.',
+        'Keep the tone natural and human: brief, direct, and not overly wordy.',
+        'Structure: first acknowledge the message, then ask 3 to 6 short questions to fill key gaps, then give 1 to 3 safe and general observation or self-care suggestions, then remind the patient about red-flag symptoms.',
         hasActiveConsultation
-          ? '当前患者已建立医生会话：不要提及“发起医生会诊/回复1/支付链接”等流程；如果患者要求医生沟通，直接引导其在当前会话继续描述情况即可。'
-          : '如果患者强烈要求医生沟通，说明“可发起医生会诊：回复找医生→系统提示回复1确认→发送支付链接→支付后建立医生会话”。',
-        '不要提及“我是AI/模型/提示词/系统”。只输出可直接发送的一段微信消息。'
+          ? 'This patient already has an active doctor consultation. Do not mention starting consultation flow, replying with 1, or payment links. If the patient asks for the doctor, tell them to continue describing the situation in the current chat.'
+          : 'If the patient strongly requests the doctor, explain the consultation flow briefly: ask for the doctor, receive the system confirmation step, then payment creates the doctor consultation.',
+        'Do not mention AI, models, prompts, or systems. Output only a message that can be sent directly to the patient.'
       ].join('\n');
 
   const prompt = `
 ${roleContext}
 
-患者画像：${persona || '（无）'}
+Patient persona: ${persona || '(none)'}
 
-你将基于“患者概况/记忆/知识库”起草一条回复草稿。
-写作要求：
+Draft a reply based on the patient overview, memories, and knowledge base.
+Writing requirements:
 ${roleRules}
 
-参考信息：
-患者概况：${patientInfo}
-相关病历/记忆：
+Reference information:
+Patient overview: ${patientInfo}
+Related history and memories:
 ${relevantMemories}
-相关医疗知识库：
+Relevant medical knowledge:
 ${relevantKnowledge}
 
-现在请直接输出“回复草稿”，不要标题，不要列表符号，不要引号。
+Now output the reply draft directly. Do not add a title, bullet points, or quotation marks.
 `;
 
   const response = await seaLionClient.chat.completions.create({
@@ -447,25 +461,25 @@ ${relevantKnowledge}
  */
 export async function classifyIntent(query: string): Promise<'medical_consult' | 'chitchat_admin'> {
   const prompt = `
-你是一个医疗意图识别助手。
-请判断用户的以下输入是属于“病情/用药相关咨询（包括通用用药问题）”还是“行政类问题（如上班时间、地址、收费、流程、发票、支付等）”。
+You are a medical intent classification assistant.
+Determine whether the user's input is a medical consultation about symptoms, treatment, or medication, or an administrative question about clinic operations.
 
-示例：
-- "我头疼" -> medical_consult
-- "我有高血压" -> medical_consult
-- "医生，我最近总是失眠" -> medical_consult
-- "几点上班？" -> chitchat_admin
-- "挂号费多少？" -> chitchat_admin
-- "你好" -> chitchat_admin
-- "感冒了吃什么药？" -> medical_consult
-修正策略：
-- 只要涉及症状、疾病、检查、治疗、用药、剂量、不良反应、孕哺用药等 -> medical_consult
-- 仅当问题明显是行政流程/时间/地点/费用/支付/发票/挂号等 -> chitchat_admin
+Examples:
+- "I have a headache" -> medical_consult
+- "I have hypertension" -> medical_consult
+- "Doctor, I have been having insomnia lately" -> medical_consult
+- "What time do you open?" -> chitchat_admin
+- "How much is the registration fee?" -> chitchat_admin
+- "Hello" -> chitchat_admin
+- "What medicine should I take for a cold?" -> medical_consult
+Rule:
+- If it involves symptoms, disease, testing, treatment, medication, dosage, adverse effects, or pregnancy/breastfeeding medication use -> medical_consult
+- Only use chitchat_admin when the question is clearly about scheduling, address, cost, payment, invoice, registration, or clinic process
 
-用户输入：
+User input:
 ${query}
 
-请仅输出类别代码：medical_consult 或 chitchat_admin
+Output only the category code: medical_consult or chitchat_admin
 `;
 
   const response = await withRetry(async () => {
@@ -485,14 +499,14 @@ ${query}
  */
 export async function generateKnowledgeResponse(query: string, relevantKnowledge: string): Promise<string> {
   const prompt = `
-你是一个医疗机构的“行政类”助手，只能回答行政/流程问题（如上班时间、地址、收费、挂号、支付、发票、就诊流程）。
-你不能回答任何病情、用药、治疗、检查相关的问题。
-如果用户的问题不是行政类，或知识库中没有相关信息，请直接回复：我只能回答行政类问题，已为您记录，请稍后由人工回复。
+You are an administrative assistant for a medical organization. You may answer only operational or process questions such as opening hours, address, fees, registration, payment, invoices, and visit flow.
+You must not answer questions about symptoms, medication, treatment, or tests.
+If the question is not administrative, or if the knowledge base does not contain the answer, reply exactly: I can only answer administrative questions. Your message has been recorded, and a staff member will follow up later.
 
-知识库参考：
+Knowledge base reference:
 ${relevantKnowledge}
 
-用户问题：${query}
+User question: ${query}
 `;
 
   const response = await seaLionClient.chat.completions.create({

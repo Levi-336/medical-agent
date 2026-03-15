@@ -20,8 +20,8 @@ export default function VoiceInput({ onTextRecognized }: { onTextRecognized: (te
 
     try {
       if (!navigator.mediaDevices) {
-        console.error("MediaDevices API 不可用");
-        return alert("浏览器未开放麦克风权限！");
+        console.error("MediaDevices API is not available.");
+        return alert("Microphone permission is not available in this browser.");
       }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -37,7 +37,7 @@ export default function VoiceInput({ onTextRecognized }: { onTextRecognized: (te
         const mimeType = mediaRecorderRef.current?.mimeType || 'audio/wav';
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         if (audioBlob.size < 1000) {
-          alert("录音太短，请重试！");
+          alert("The recording is too short. Please try again.");
           setIsProcessing(false);
           return;
         }
@@ -48,8 +48,8 @@ export default function VoiceInput({ onTextRecognized }: { onTextRecognized: (te
       mediaRecorder.start();
       setIsRecording(true);
     } catch (error) {
-      console.error("无法访问麦克风权限：", error);
-      alert("无法访问麦克风权限！");
+      console.error("Unable to access microphone permission:", error);
+      alert("Unable to access microphone permission.");
     }
   };
 
@@ -57,18 +57,22 @@ export default function VoiceInput({ onTextRecognized }: { onTextRecognized: (te
     try {
       const fileExtension = mimeType.split('/')[1] || 'wav';
       const { url, fileKey } = await getMeralionUploadUrl(`voice_${Date.now()}.${fileExtension}`, audioBlob.size, mimeType);
-      console.log("上传 URL: ", url);
+      console.log("Upload URL:", url);
       const response = await fetch(url, { method: "PUT", headers: { "Content-Type": mimeType }, body: audioBlob });
       if (!response.ok) {
-        throw new Error(`音频上传失败，状态码：${response.status}`);
+        throw new Error(`Audio upload failed with status ${response.status}`);
       }
-      console.log("音频上传成功，文件键: ", fileKey);
+      console.log("Audio upload succeeded, file key:", fileKey);
       const text = await transcribeAudioWithMeralion(fileKey);
-      console.log("语音识别结果：", text);
+      console.log("Speech recognition result:", text);
       if (text && text.trim()) onTextRecognized(text);
-    } catch (error) {
-      console.error("语音处理失败：", error);
-      alert("语音识别失败！");
+    } catch (error: any) {
+      console.error("Voice processing failed:", error);
+      if (error.message.includes('404')) {
+        alert("The speech recognition service is temporarily unavailable. Please try again later or type your message.");
+      } else {
+        alert("Speech recognition failed. Please try again later.");
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -76,15 +80,15 @@ export default function VoiceInput({ onTextRecognized }: { onTextRecognized: (te
 
   return (
     <button
-      type="button" // 极度重要：防止触发表单提交
+      type="button"
       onClick={toggleRecording}
       disabled={isProcessing}
-      title={isRecording ? "点击停止录音" : "点击开始录音"}
+      title={isRecording ? "Click to stop recording" : "Click to start recording"}
       className={`flex items-center justify-center w-11 h-11 rounded-full transition-all shrink-0 ${
-        isRecording 
-          ? "bg-red-500 text-white animate-pulse shadow-lg" 
-          : isProcessing 
-            ? "bg-[#54656f] text-[#8696a0]" 
+        isRecording
+          ? "bg-red-500 text-white animate-pulse shadow-lg"
+          : isProcessing
+            ? "bg-[#54656f] text-[#8696a0]"
             : "bg-[#2a3942] text-[#8696a0] hover:bg-[#374045] hover:text-[#e9edef]"
       }`}
     >

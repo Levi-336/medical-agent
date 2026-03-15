@@ -110,23 +110,23 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
           // Detect if multiline (batch import) or single line
           if (kbInput.includes('\n')) {
               await importKnowledge(kbInput);
-              alert('批量导入知识库成功！');
+              alert('Knowledge base imported successfully!');
           } else {
               await addKnowledge(kbInput);
-              alert('添加知识条目成功！');
+              alert('Knowledge entry added successfully!');
           }
           setKbInput('');
           loadKnowledge();
       } catch (e) {
           console.error(e);
-          alert('操作失败');
+          alert('Operation failed.');
       } finally {
           setIsKbAdding(false);
       }
   };
 
   const handleDeleteKb = async (id: number) => {
-    if (!confirm('确定删除该知识条目吗？')) return;
+    if (!confirm('Are you sure you want to delete this knowledge entry?')) return;
     await deleteKnowledge(id);
     loadKnowledge();
   };
@@ -210,7 +210,7 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
   };
 
   const handleResetDemo = async () => {
-    if (!confirm('将清空所有患者与对话记录，并重建演示数据。确定继续吗？')) return;
+    if (!confirm('This will clear all patients and chat records, then rebuild the demo data. Continue?')) return;
     await resetPatientsAndSeedDemo();
     const newPatients = await getPatientsWithConsultStatus();
     setPatients(newPatients);
@@ -235,12 +235,12 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
           setPatients(newPatients);
           loadPatientData(selectedPatientId);
       } else {
-          alert('更新失败');
+          alert('Update failed.');
       }
   };
 
   const handleDeletePatient = async () => {
-      if (!selectedPatientId || !confirm('确定要删除该患者档案吗？此操作不可恢复。')) return;
+      if (!selectedPatientId || !confirm('Are you sure you want to delete this patient record? This action cannot be undone.')) return;
       
       const result = await deletePatient(selectedPatientId);
       if (result.success) {
@@ -254,7 +254,7 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
               setSelectedPatient(null);
           }
       } else {
-          alert('删除失败');
+          alert('Delete failed.');
       }
   };
 
@@ -264,12 +264,12 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
     try {
       await importPatientData(selectedPatientId, importText);
       setImportText('');
-      alert('资料分析并导入成功！');
+      alert('Patient data analyzed and imported successfully!');
       // Refresh data
       loadPatientData(selectedPatientId);
     } catch (err) {
       console.error(err);
-      alert('导入失败');
+      alert('Import failed.');
     } finally {
       setIsImporting(false);
     }
@@ -287,7 +287,7 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
       loadChat(selectedPatientId);
     } catch (err) {
       console.error(err);
-      alert('发送失败');
+      alert('Failed to send message.');
     } finally {
       setIsSending(false);
     }
@@ -314,12 +314,12 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
     if (!selectedPatientId) return;
     try {
       const { payLink } = await startDoctorConsultation(selectedPatientId, 'manual');
-      const msg = `如需医生会诊，请点击链接完成支付：${payLink}（演示版本：点击即视为已支付）`;
+      const msg = `If a doctor consultation is needed, please complete payment here: ${payLink} (demo: clicking the link marks it as paid).`;
       await sendDoctorMessage(selectedPatientId, msg);
       loadChat(selectedPatientId);
     } catch (err) {
       console.error(err);
-      alert('发起失败');
+      alert('Failed to start consultation.');
     }
   };
 
@@ -328,12 +328,12 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
       {/* Sidebar: Patient List */}
       <div className="w-72 bg-white border-r border-slate-200 flex flex-col">
         <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white/80 backdrop-blur">
-          <h2 className="font-bold text-slate-900">患者列表</h2>
+          <h2 className="font-bold text-slate-900">Patient list</h2>
           <div className="flex items-center gap-2">
             <button
               onClick={handleResetDemo}
               className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 transition"
-              title="重建演示数据"
+              title="Reset demo data"
               type="button"
             >
               <Database size={20} />
@@ -341,7 +341,7 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
             <button 
               onClick={() => setShowAddModal(true)}
               className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-600 transition"
-              title="新增患者"
+              title="Add patient"
               type="button"
             >
               <Plus size={20} />
@@ -369,7 +369,7 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                       : "bg-slate-100 border-slate-200 text-slate-700"
                   )}
                 >
-                  {(p.name || '患').slice(0, 1)}
+                  {(p.name || 'P').slice(0, 1)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
@@ -377,12 +377,12 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                       <div className="font-semibold text-slate-900 truncate">{p.name}</div>
                       {p.hasActiveConsultation && (
                         <span className="inline-flex shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700 border border-emerald-200 whitespace-nowrap">
-                          已建立医生会话
+                          Doctor consultation active
                         </span>
                       )}
                     </div>
                     <span className="text-[11px] text-slate-500 whitespace-nowrap">
-                      {(p.gender || '—') + ' · ' + (p.age != null ? `${p.age}岁` : '—')}
+                      {(p.gender || '-') + ' / ' + (p.age != null ? `${p.age} yrs` : '-')}
                     </span>
                   </div>
                   <div className="mt-1 flex items-center gap-2">
@@ -412,21 +412,21 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                       : "bg-blue-50 border-blue-100 text-blue-700"
                   )}
                 >
-                  {(selectedPatient.name || '患').slice(0, 1)}
+                  {(selectedPatient.name || 'P').slice(0, 1)}
                 </div>
                 <h3 className="font-bold text-lg text-slate-900 truncate">{selectedPatient.name}</h3>
                 {selectedPatient.hasActiveConsultation && (
-                  <span className="text-xs text-emerald-700 whitespace-nowrap">已建立医生会话</span>
+                  <span className="text-xs text-emerald-700 whitespace-nowrap">Doctor consultation active</span>
                 )}
-                <span className="text-xs text-slate-500 whitespace-nowrap">实时对话</span>
+                <span className="text-xs text-slate-500 whitespace-nowrap">Live chat</span>
               </div>
               <Link 
                   href="/" 
                   className="flex items-center gap-1 text-xs text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition border border-blue-100"
-                  title="返回首页"
+                  title="Back to home"
               >
                   <Home size={14} />
-                  <span>返回首页</span>
+                  <span>Back to home</span>
               </Link>
             </div>
             <div
@@ -439,7 +439,7 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
               }}
             >
               {chatHistory.length === 0 ? (
-                <div className="text-center text-slate-400 mt-10">暂无对话记录</div>
+                <div className="text-center text-slate-400 mt-10">No conversation history</div>
               ) : (
                 chatHistory.map(msg => {
                     const isUser = msg.role === 'user';
@@ -465,9 +465,9 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                                     : 'rounded-2xl rounded-tl-md bg-white text-slate-800 border border-slate-200'
                               )}
                             >
-                                {isUser && <span className="block text-[11px] text-slate-500 mb-1 font-semibold">患者</span>}
-                                {isDoctor && <span className="block text-xs text-white mb-1 font-bold">医生助理</span>}
-                                {isAI && <span className="block text-[11px] text-slate-500 mb-1 font-semibold">系统</span>}
+                                {isUser && <span className="block text-[11px] text-slate-500 mb-1 font-semibold">Patient</span>}
+                                {isDoctor && <span className="block text-xs text-white mb-1 font-bold">Assistant</span>}
+                                {isAI && <span className="block text-[11px] text-slate-500 mb-1 font-semibold">System</span>}
                                 <span className="whitespace-pre-wrap">{text}</span>
                             </div>
 
@@ -479,20 +479,20 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                                         className="text-xs text-slate-600 hover:text-blue-700 flex items-center gap-1 transition"
                                     >
                                         {expandedMsgId === msg.id ? <ChevronUp size={12}/> : <Search size={12}/>}
-                                        {expandedMsgId === msg.id ? '收起分析' : '查看 AI 提取与关联'}
+                                        {expandedMsgId === msg.id ? 'Hide analysis' : 'View AI extraction and links'}
                                     </button>
                                     
                                     {expandedMsgId === msg.id && (
                                         <div className="mt-2 bg-slate-50 border border-slate-200 rounded p-3 text-xs animate-in slide-in-from-top-2">
                                             {isAnalyzing ? (
                                                 <div className="flex items-center gap-2 text-slate-500">
-                                                    <RefreshCw className="animate-spin" size={12}/> 正在检索关联记忆与知识...
+                                                    <RefreshCw className="animate-spin" size={12}/> Retrieving related memories and knowledge...
                                                 </div>
                                             ) : msgAnalysis ? (
                                                 <div className="space-y-3">
                                                     <div>
                                                         <h5 className="font-bold text-slate-700 mb-1 flex items-center gap-1">
-                                                            <Brain size={12} className="text-purple-500"/> 关联记忆 (RAG)
+                                                            <Brain size={12} className="text-purple-500"/> Related memories (RAG)
                                                         </h5>
                                                         {msgAnalysis.related_memories.length > 0 ? (
                                                             <ul className="space-y-1">
@@ -502,12 +502,12 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                                                                     </li>
                                                                 ))}
                                                             </ul>
-                                                        ) : <span className="text-slate-400 italic">无强关联记忆</span>}
+                                                        ) : <span className="text-slate-400 italic">No strong related memories</span>}
                                                     </div>
                                                     
                                                     <div>
                                                         <h5 className="font-bold text-slate-700 mb-1 flex items-center gap-1">
-                                                            <BookOpen size={12} className="text-green-500"/> 关联知识库
+                                                            <BookOpen size={12} className="text-green-500"/> Related knowledge base
                                                         </h5>
                                                         {msgAnalysis.related_knowledge.length > 0 ? (
                                                             <ul className="space-y-1">
@@ -518,11 +518,11 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                                                                     </li>
                                                                 ))}
                                                             </ul>
-                                                        ) : <span className="text-slate-400 italic">无强关联知识</span>}
+                                                        ) : <span className="text-slate-400 italic">No strong related knowledge</span>}
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="text-red-400">无法获取分析数据</div>
+                                                <div className="text-red-400">Unable to load analysis data</div>
                                             )}
                                         </div>
                                     )}
@@ -547,7 +547,7 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                         <div className="flex items-start gap-2">
                             <Lightbulb className="text-amber-500 mt-0.5 flex-shrink-0" size={16} />
                             <div className="flex-1 min-w-0">
-                                <h4 className="text-xs font-bold text-amber-700 mb-1">医生助理建议回复 (点击填入):</h4>
+                                <h4 className="text-xs font-bold text-amber-700 mb-1">Suggested assistant reply (click to insert):</h4>
                                 <div className="max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-amber-200 pr-1">
                                     <p className="text-sm text-amber-900 cursor-pointer hover:bg-amber-100 p-1 rounded transition whitespace-pre-wrap" 
                                     onClick={() => setInputMessage(copilotSuggestion)}>
@@ -562,9 +562,9 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                                     }}
                                     className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-lg hover:bg-amber-300 whitespace-nowrap transition"
                                 >
-                                    填入
+                                    Insert
                                 </button>
-                                <button onClick={() => setCopilotSuggestion('')} className="text-amber-400 hover:text-amber-600 text-xs text-right">忽略</button>
+                                <button onClick={() => setCopilotSuggestion('')} className="text-amber-400 hover:text-amber-600 text-xs text-right">Dismiss</button>
                             </div>
                         </div>
                     </div>
@@ -586,14 +586,14 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                             style={{ color: isCopilotLoading ? "#c084fc" : "#7e22ce" }}
                         >
                             {isCopilotLoading ? <RefreshCw className="animate-spin" size={12}/> : <Sparkles size={12}/>}
-                            {isCopilotLoading ? '正在生成建议...' : '重新生成建议'}
+                            {isCopilotLoading ? 'Generating suggestion...' : 'Regenerate suggestion'}
                         </button>
                         <button
                             type="button"
                             onClick={handleStartDoctorConsultation}
                             className="text-xs flex items-center gap-1 text-emerald-700 hover:bg-emerald-50 px-2 py-1 rounded-lg transition border border-emerald-100"
                         >
-                            发起医生会诊
+                            Start doctor consultation
                         </button>
                     </div>
                     <div className="flex gap-2 items-end">
@@ -606,7 +606,7 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                                     handleSendMessage();
                                 }
                             }}
-                            placeholder="输入回复... (Shift+Enter 换行)"
+                            placeholder="Type a reply... (Shift+Enter for a new line)"
                             className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-slate-900 resize-none h-20 shadow-sm"
                             disabled={isSending}
                         />
@@ -630,31 +630,31 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                 onClick={() => setActiveTab('persona')}
                 className={cn("flex-1 p-3 text-sm font-medium flex justify-center items-center gap-2", activeTab === 'persona' ? "text-blue-600 border-b-2 border-blue-600" : "text-slate-500")}
               >
-                <Activity size={16} /> 画像
+                <Activity size={16} /> Persona
               </button>
               <button 
                 onClick={() => setActiveTab('info')}
                 className={cn("flex-1 p-3 text-sm font-medium flex justify-center items-center gap-2", activeTab === 'info' ? "text-blue-600 border-b-2 border-blue-600" : "text-slate-500")}
               >
-                <User size={16} /> 信息
+                <User size={16} /> Info
               </button>
               <button 
                 onClick={() => setActiveTab('import')}
                 className={cn("flex-1 p-3 text-sm font-medium flex justify-center items-center gap-2", activeTab === 'import' ? "text-blue-600 border-b-2 border-blue-600" : "text-slate-500")}
               >
-                <Upload size={16} /> 导入
+                <Upload size={16} /> Import
               </button>
               <button 
                 onClick={() => setActiveTab('memories')}
                 className={cn("flex-1 p-3 text-sm font-medium flex justify-center items-center gap-2", activeTab === 'memories' ? "text-blue-600 border-b-2 border-blue-600" : "text-slate-500")}
               >
-                <Brain size={16} /> 记忆
+                <Brain size={16} /> Memories
               </button>
               <button 
                 onClick={() => setActiveTab('knowledge')}
                 className={cn("flex-1 p-3 text-sm font-medium flex justify-center items-center gap-2", activeTab === 'knowledge' ? "text-blue-600 border-b-2 border-blue-600" : "text-slate-500")}
               >
-                <BookOpen size={16} /> 知识库
+                <BookOpen size={16} /> Knowledge
               </button>
             </div>
 
@@ -664,14 +664,14 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                   <PatientOverview patient={selectedPatient} memories={memories} chatHistory={chatHistory} />
                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                     <h4 className="font-bold text-blue-800 mb-2 flex items-center gap-2">
-                        <Activity size={16}/> 当前画像
+                        <Activity size={16}/> Current persona
                     </h4>
                     <p className="text-sm text-blue-900 leading-relaxed whitespace-pre-wrap">
                       {selectedPatient.persona}
                     </p>
                   </div>
                   <div className="text-xs text-slate-400">
-                    画像会根据导入的资料和对话自动更新。
+                    The persona updates automatically based on imported records and conversations.
                   </div>
                 </div>
               )}
@@ -681,21 +681,21 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                   <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
                     <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
                         <h4 className="font-bold text-slate-800 flex items-center gap-2">
-                            <FileText size={16}/> 档案详情
+                            <FileText size={16}/> Record details
                         </h4>
                         {!isEditingInfo ? (
                             <div className="flex gap-2">
                                 <button 
                                     onClick={() => setIsEditingInfo(true)}
                                     className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition"
-                                    title="编辑"
+                                    title="Edit"
                                 >
                                     <Edit2 size={16} />
                                 </button>
                                 <button 
                                     onClick={handleDeletePatient}
                                     className="p-1.5 text-red-600 hover:bg-red-50 rounded transition"
-                                    title="删除"
+                                    title="Delete"
                                 >
                                     <Trash2 size={16} />
                                 </button>
@@ -704,7 +704,7 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                             <button 
                                 onClick={() => setIsEditingInfo(false)}
                                 className="p-1.5 text-slate-400 hover:bg-slate-100 rounded transition"
-                                title="取消"
+                                title="Cancel"
                             >
                                 <X size={16} />
                             </button>
@@ -718,23 +718,23 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                                 <span className="col-span-2 text-slate-900 font-mono text-xs">{selectedPatient.id}</span>
                             </div>
                             <div className="grid grid-cols-3 gap-2">
-                                <span className="text-slate-500">姓名:</span>
+                                <span className="text-slate-500">Name:</span>
                                 <span className="col-span-2 text-slate-900 font-medium">{selectedPatient.name}</span>
                             </div>
                             <div className="grid grid-cols-3 gap-2">
-                                <span className="text-slate-500">性别:</span>
+                                <span className="text-slate-500">Gender:</span>
                                 <span className="col-span-2 text-slate-900">{selectedPatient.gender || '—'}</span>
                             </div>
                             <div className="grid grid-cols-3 gap-2">
-                                <span className="text-slate-500">年龄:</span>
-                                <span className="col-span-2 text-slate-900">{selectedPatient.age != null ? `${selectedPatient.age} 岁` : '—'}</span>
+                                <span className="text-slate-500">Age:</span>
+                                <span className="col-span-2 text-slate-900">{selectedPatient.age != null ? `${selectedPatient.age} yrs` : '-'}</span>
                             </div>
                             <div className="grid grid-cols-3 gap-2">
-                                <span className="text-slate-500">建档时间:</span>
+                                <span className="text-slate-500">Created:</span>
                                 <span className="col-span-2 text-slate-900">{new Date(selectedPatient.created_at).toLocaleDateString()}</span>
                             </div>
                             <div className="pt-2 border-t border-slate-100">
-                                <span className="block text-slate-500 mb-1">基础病情:</span>
+                                <span className="block text-slate-500 mb-1">Condition:</span>
                                 <div className="bg-red-50 text-red-700 p-2 rounded border border-red-100">
                                     {selectedPatient.condition || '—'}
                                 </div>
@@ -743,24 +743,24 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                     ) : (
                         <form onSubmit={handleUpdatePatient} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700">姓名</label>
+                                <label className="block text-sm font-medium text-slate-700">Name</label>
                                 <input name="name" defaultValue={selectedPatient.name} required className="w-full p-2 border rounded mt-1 text-slate-900 text-sm" />
                             </div>
                             <div className="flex gap-4">
                                 <div className="flex-1">
-                                    <label className="block text-sm font-medium text-slate-700">年龄</label>
+                                    <label className="block text-sm font-medium text-slate-700">Age</label>
                                 <input name="age" type="number" defaultValue={selectedPatient.age ?? ''} required className="w-full p-2 border rounded mt-1 text-slate-900 text-sm" />
                                 </div>
                                 <div className="flex-1">
-                                    <label className="block text-sm font-medium text-slate-700">性别</label>
+                                    <label className="block text-sm font-medium text-slate-700">Gender</label>
                                     <select name="gender" defaultValue={selectedPatient.gender ?? ''} className="w-full p-2 border rounded mt-1 text-slate-900 text-sm">
-                                        <option>男</option>
-                                        <option>女</option>
+                                        <option>Male</option>
+                                        <option>Female</option>
                                     </select>
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700">基础病情</label>
+                                <label className="block text-sm font-medium text-slate-700">Condition</label>
                                 <textarea 
                                     name="condition" 
                                     defaultValue={selectedPatient.condition ?? ''} 
@@ -770,7 +770,7 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                             </div>
                             <div className="flex justify-end gap-2 pt-2">
                                 <button type="submit" className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
-                                    <Save size={14} /> 保存
+                                    <Save size={14} /> Save
                                 </button>
                             </div>
                         </form>
@@ -783,7 +783,7 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                 <div className="space-y-4">
                   <textarea
                     className="w-full h-48 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm text-slate-900"
-                    placeholder="在此粘贴患者过往病历、检查报告文本..."
+                    placeholder="Paste prior medical notes and exam report text here..."
                     value={importText}
                     onChange={(e) => setImportText(e.target.value)}
                   />
@@ -793,17 +793,17 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                     className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex justify-center items-center gap-2"
                   >
                     {isImporting ? <RefreshCw className="animate-spin" size={16} /> : <Brain size={16} />}
-                    AI 分析并导入
+                    Analyze with AI and import
                   </button>
                   <p className="text-xs text-slate-500">
-                    AI 将自动提取关键事实存入向量库，并更新患者画像。
+                    AI will extract key facts into the vector store and update the patient persona.
                   </p>
                 </div>
               )}
 
               {activeTab === 'memories' && (
                 <div className="space-y-3">
-                  <h4 className="font-bold text-slate-700 text-sm">最近记忆 (RAG)</h4>
+                  <h4 className="font-bold text-slate-700 text-sm">Recent memories (RAG)</h4>
                   {memories.map((m) => (
                     <div key={m.id} className="p-3 bg-slate-50 rounded border border-slate-100 text-sm">
                       <div className="mb-1 text-slate-800">{m.content}</div>
@@ -819,10 +819,10 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
               {activeTab === 'knowledge' && (
                   <div className="space-y-4">
                       <div className="bg-slate-50 p-3 rounded border border-slate-200">
-                          <h4 className="font-bold text-slate-700 text-sm mb-2">添加知识 (支持批量)</h4>
+                          <h4 className="font-bold text-slate-700 text-sm mb-2">Add knowledge (batch supported)</h4>
                           <textarea
                               className="w-full h-24 p-2 border border-slate-300 rounded text-sm text-slate-900 resize-none mb-2"
-                              placeholder="输入通用知识，例如：&#10;门诊时间：周一至周五 8:00-17:00&#10;挂号费：普通号10元，专家号50元"
+                              placeholder="Enter general knowledge, for example:&#10;Clinic hours: Monday to Friday, 8:00-17:00&#10;Registration fee: General $10, Specialist $50"
                               value={kbInput}
                               onChange={(e) => setKbInput(e.target.value)}
                           />
@@ -832,17 +832,17 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                               className="w-full py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 flex justify-center items-center gap-2"
                           >
                               {isKbAdding ? <RefreshCw className="animate-spin" size={14} /> : <Database size={14} />}
-                              存入知识库
+                              Save to knowledge base
                           </button>
                       </div>
 
                       <div className="space-y-2">
                           <h4 className="font-bold text-slate-700 text-sm flex items-center gap-2">
-                              <BookOpen size={14}/> 现有知识条目 ({knowledgeList.length})
+                              <BookOpen size={14}/> Existing knowledge entries ({knowledgeList.length})
                           </h4>
                           <div className="max-h-[300px] overflow-y-auto space-y-2">
                               {knowledgeList.length === 0 ? (
-                                  <div className="text-center text-xs text-slate-400 py-4">暂无知识库内容</div>
+                                  <div className="text-center text-xs text-slate-400 py-4">No knowledge entries yet</div>
                               ) : (
                                   knowledgeList.map((k) => (
                                       <div key={k.id} className="p-2 bg-white rounded border border-slate-100 text-xs shadow-sm group relative">
@@ -854,8 +854,8 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                                                 onChange={(e) => setEditKbContent(e.target.value)}
                                               />
                                               <div className="flex gap-2 justify-end">
-                                                <button onClick={() => setEditingKbId(null)} className="text-slate-600 hover:text-slate-800">取消</button>
-                                                <button onClick={() => saveEditKb(k.id)} className="text-blue-600 hover:text-blue-700 font-bold">保存</button>
+                                                <button onClick={() => setEditingKbId(null)} className="text-slate-600 hover:text-slate-800">Cancel</button>
+                                                <button onClick={() => saveEditKb(k.id)} className="text-blue-600 hover:text-blue-700 font-bold">Save</button>
                                               </div>
                                             </div>
                                           ) : (
@@ -863,10 +863,10 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
                                               <div className="text-slate-800 mb-1 pr-12">{k.content}</div>
                                               <div className="text-slate-400 scale-90 origin-left">{new Date(k.created_at).toLocaleDateString()}</div>
                                               <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                                                  <button onClick={() => startEditKb(k)} className="p-1 hover:bg-slate-100 rounded text-blue-500" title="编辑">
+                                                  <button onClick={() => startEditKb(k)} className="p-1 hover:bg-slate-100 rounded text-blue-500" title="Edit">
                                                       <Edit2 size={12}/>
                                                   </button>
-                                                  <button onClick={() => handleDeleteKb(k.id)} className="p-1 hover:bg-slate-100 rounded text-red-500" title="删除">
+                                                  <button onClick={() => handleDeleteKb(k.id)} className="p-1 hover:bg-slate-100 rounded text-red-500" title="Delete">
                                                       <Trash2 size={12}/>
                                                   </button>
                                               </div>
@@ -884,7 +884,7 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
         </>
       ) : (
         <div className="flex-1 flex items-center justify-center text-slate-400">
-          请选择或创建一个患者
+          Please select or create a patient
         </div>
       )}
 
@@ -892,32 +892,32 @@ export default function DoctorDashboard({ initialPatients }: DoctorDashboardProp
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl w-96 shadow-xl">
-            <h3 className="text-xl font-bold mb-4 text-slate-900">新增患者</h3>
+            <h3 className="text-xl font-bold mb-4 text-slate-900">Add patient</h3>
             <form onSubmit={handleCreatePatient} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700">姓名</label>
+                <label className="block text-sm font-medium text-slate-700">Name</label>
                 <input name="name" required className="w-full p-2 border rounded mt-1 text-slate-900" />
               </div>
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-slate-700">年龄</label>
+                  <label className="block text-sm font-medium text-slate-700">Age</label>
                   <input name="age" type="number" required className="w-full p-2 border rounded mt-1 text-slate-900" />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-slate-700">性别</label>
+                  <label className="block text-sm font-medium text-slate-700">Gender</label>
                   <select name="gender" className="w-full p-2 border rounded mt-1 text-slate-900">
-                    <option>男</option>
-                    <option>女</option>
+                    <option>Male</option>
+                    <option>Female</option>
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700">基础病情</label>
-                <input name="condition" required className="w-full p-2 border rounded mt-1 text-slate-900" placeholder="e.g. 高血压, 糖尿病" />
+                <label className="block text-sm font-medium text-slate-700">Condition</label>
+                <input name="condition" required className="w-full p-2 border rounded mt-1 text-slate-900" placeholder="e.g. hypertension, diabetes" />
               </div>
               <div className="flex justify-end gap-2 mt-6">
-                <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">取消</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">创建</button>
+                <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Cancel</button>
+                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Create</button>
               </div>
             </form>
           </div>

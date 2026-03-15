@@ -4,7 +4,15 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import type { ChatMessage, DoctorConsultation, Patient } from '@/app/actions';
-import { endDoctorConsultation, getChatHistory, getDoctorCopilot, getPaidDoctorConsultPatients, getPatient, getPatientMemories, sendRealDoctorMessage } from '@/app/actions';
+import {
+  endDoctorConsultation,
+  getChatHistory,
+  getDoctorCopilot,
+  getPaidDoctorConsultPatients,
+  getPatient,
+  getPatientMemories,
+  sendRealDoctorMessage,
+} from '@/app/actions';
 import { Activity, Brain, FileText, Home, Lightbulb, RefreshCw, Send, Sparkles, User } from 'lucide-react';
 import PatientOverview from '@/components/PatientOverview';
 
@@ -144,16 +152,16 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       <div className="w-72 bg-white border-r border-slate-200 flex flex-col">
         <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white/80 backdrop-blur">
-          <h2 className="font-bold text-slate-900">医生会话</h2>
+          <h2 className="font-bold text-slate-900">Doctor consultations</h2>
           <Link href="/" className="flex items-center gap-1 text-xs text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition border border-blue-100">
             <Home size={14} />
-            返回首页
+            Back to home
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {items.length === 0 ? (
             <div className="p-6 text-sm text-slate-500 rounded-xl border border-dashed border-slate-200 bg-slate-50">
-              暂无已支付会话
+              No paid consultations yet
             </div>
           ) : (
             items.map((it) => (
@@ -169,21 +177,21 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
               >
                 <div className="flex items-start gap-3">
                   <div className="h-10 w-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 font-semibold">
-                    {(it.patient.name || '患').slice(0, 1)}
+                    {(it.patient.name || 'P').slice(0, 1)}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <div className="font-semibold text-slate-900 truncate">{it.patient.name}</div>
                       <span className="text-[11px] text-slate-500 whitespace-nowrap">
-                        {(it.patient.gender || '—') + ' · ' + (it.patient.age != null ? `${it.patient.age}岁` : '—')}
+                        {(it.patient.gender || '-') + ' / ' + (it.patient.age != null ? `${it.patient.age} yrs` : '-')}
                       </span>
                     </div>
                     <div className="mt-1 flex items-center gap-2">
                       <span className="inline-flex max-w-full truncate rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 border border-slate-200">
-                        {it.patient.condition || '—'}
+                        {it.patient.condition || '-'}
                       </span>
                       <span className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] text-emerald-700 border border-emerald-200">
-                        已支付
+                        Paid
                       </span>
                     </div>
                   </div>
@@ -198,10 +206,10 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
         <div className="p-4 bg-white/80 backdrop-blur border-b border-slate-200 shadow-sm z-10 flex justify-between items-center">
           <div className="flex items-center gap-2 min-w-0">
             <div className="h-9 w-9 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 font-semibold">
-              {(selected?.patient.name || '患').slice(0, 1)}
+              {(selected?.patient.name || 'P').slice(0, 1)}
             </div>
-            <div className="font-bold text-lg text-slate-900 truncate">{selected ? `${selected.patient.name}` : '医生会话'}</div>
-            {selected && <span className="text-xs text-slate-500 whitespace-nowrap">医生会话</span>}
+            <div className="font-bold text-lg text-slate-900 truncate">{selected ? `${selected.patient.name}` : 'Doctor consultations'}</div>
+            {selected && <span className="text-xs text-slate-500 whitespace-nowrap">Doctor consultations</span>}
           </div>
           <button
             type="button"
@@ -209,7 +217,7 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
             disabled={!selectedConsultationId}
             className="text-xs px-3 py-1.5 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 disabled:opacity-50 transition"
           >
-            结束会话
+            End consultation
           </button>
         </div>
 
@@ -224,7 +232,7 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
         >
           {selectedPatientId ? (
             chatHistory.length === 0 ? (
-              <div className="text-center text-slate-400 mt-10">暂无对话记录</div>
+              <div className="text-center text-slate-400 mt-10">No conversation history</div>
             ) : (
               chatHistory.map((msg) => {
                 const isDoctor = msg.role === 'doctor';
@@ -248,10 +256,10 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
                               : 'rounded-2xl bg-white text-slate-700 border border-slate-200'
                       )}
                     >
-                      {isUser && <span className="block text-[11px] text-slate-500 mb-1 font-semibold">患者</span>}
-                      {isAssistant && <span className="block text-[11px] text-slate-500 mb-1 font-semibold">医生助理</span>}
-                      {isAi && <span className="block text-[11px] text-slate-500 mb-1 font-semibold">系统</span>}
-                      {isDoctor && <span className="block text-xs text-white mb-1 font-bold">医生</span>}
+                      {isUser && <span className="block text-[11px] text-slate-500 mb-1 font-semibold">Patient</span>}
+                      {isAssistant && <span className="block text-[11px] text-slate-500 mb-1 font-semibold">Assistant</span>}
+                      {isAi && <span className="block text-[11px] text-slate-500 mb-1 font-semibold">System</span>}
+                      {isDoctor && <span className="block text-xs text-white mb-1 font-bold">Doctor</span>}
                       <span className="whitespace-pre-wrap">{msg.content}</span>
                     </div>
                   </div>
@@ -259,7 +267,7 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
               })
             )
           ) : (
-            <div className="text-center text-slate-400 mt-10">请先等待患者支付并接入</div>
+            <div className="text-center text-slate-400 mt-10">Please wait for a paid patient consultation to appear.</div>
           )}
         </div>
 
@@ -269,7 +277,7 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
               <div className="flex items-start gap-2">
                 <Lightbulb className="text-amber-500 mt-0.5 flex-shrink-0" size={16} />
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-xs font-bold text-amber-700 mb-1">医生建议回复 (点击填入):</h4>
+                  <h4 className="text-xs font-bold text-amber-700 mb-1">Suggested doctor reply (click to insert):</h4>
                   <div className="max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-amber-200 pr-1">
                     <p
                       className="text-sm text-amber-900 cursor-pointer hover:bg-amber-100 p-1 rounded transition whitespace-pre-wrap"
@@ -287,10 +295,10 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
                     }}
                     className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-lg hover:bg-amber-300 whitespace-nowrap transition"
                   >
-                    填入
+                    Insert
                   </button>
                   <button type="button" onClick={() => setCopilotSuggestion('')} className="text-amber-400 hover:text-amber-600 text-xs text-right">
-                    忽略
+                    Dismiss
                   </button>
                 </div>
               </div>
@@ -313,7 +321,7 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
                 style={{ color: isCopilotLoading || !selectedPatientId ? "#c084fc" : "#7e22ce" }}
               >
                 {isCopilotLoading ? <RefreshCw className="animate-spin" size={12} /> : <Sparkles size={12} />}
-                {isCopilotLoading ? '正在生成建议...' : '重新生成建议'}
+                {isCopilotLoading ? 'Generating suggestion...' : 'Regenerate suggestion'}
               </button>
             </div>
             <div className="flex gap-2 items-end">
@@ -326,7 +334,7 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
                     handleSend();
                   }
                 }}
-                placeholder="医生回复... (Shift+Enter 换行)"
+                placeholder="Doctor reply... (Shift+Enter for a new line)"
                 className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-slate-900 resize-none h-20 shadow-sm"
                 disabled={sending || !selectedPatientId}
               />
@@ -343,7 +351,6 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
       </div>
 
       <div className="w-96 bg-white flex flex-col">
-        {/* Tabs */}
         <div className="flex border-b border-slate-200 bg-white sticky top-0 z-10">
           <button
             onClick={() => setActiveTab('persona')}
@@ -352,7 +359,7 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
               activeTab === 'persona' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500'
             )}
           >
-            <Activity size={16} /> 画像
+            <Activity size={16} /> Persona
           </button>
           <button
             onClick={() => setActiveTab('info')}
@@ -361,7 +368,7 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
               activeTab === 'info' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500'
             )}
           >
-            <User size={16} /> 信息
+            <User size={16} /> Info
           </button>
           <button
             onClick={() => setActiveTab('memories')}
@@ -370,7 +377,7 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
               activeTab === 'memories' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500'
             )}
           >
-            <Brain size={16} /> 记忆
+            <Brain size={16} /> Memories
           </button>
         </div>
 
@@ -382,14 +389,14 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
                   <PatientOverview patient={selectedPatient} memories={memories} chatHistory={chatHistory} />
                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                     <h4 className="font-bold text-blue-800 mb-2 flex items-center gap-2">
-                      <Activity size={16} /> 当前画像
+                      <Activity size={16} /> Current persona
                     </h4>
                     <p className="text-sm text-blue-900 leading-relaxed whitespace-pre-wrap">
                       {selectedPatient.persona || ''}
                     </p>
                   </div>
                   <div className="text-xs text-slate-400">
-                    画像会根据导入的资料和对话自动更新。
+                    The persona is updated automatically from imported records and conversation history.
                   </div>
                 </div>
               )}
@@ -399,7 +406,7 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
                   <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
                     <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
                       <h4 className="font-bold text-slate-800 flex items-center gap-2">
-                        <FileText size={16} /> 档案详情
+                        <FileText size={16} /> Record details
                       </h4>
                     </div>
                     <div className="space-y-3 text-sm">
@@ -408,25 +415,25 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
                         <span className="col-span-2 text-slate-900 font-mono text-xs">{selectedPatient.id}</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
-                        <span className="text-slate-500">姓名:</span>
+                        <span className="text-slate-500">Name:</span>
                         <span className="col-span-2 text-slate-900 font-medium">{selectedPatient.name}</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
-                        <span className="text-slate-500">性别:</span>
-                        <span className="col-span-2 text-slate-900">{selectedPatient.gender || '—'}</span>
+                        <span className="text-slate-500">Gender:</span>
+                        <span className="col-span-2 text-slate-900">{selectedPatient.gender || '-'}</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
-                        <span className="text-slate-500">年龄:</span>
-                        <span className="col-span-2 text-slate-900">{selectedPatient.age != null ? `${selectedPatient.age} 岁` : '—'}</span>
+                        <span className="text-slate-500">Age:</span>
+                        <span className="col-span-2 text-slate-900">{selectedPatient.age != null ? `${selectedPatient.age} yrs` : '-'}</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
-                        <span className="text-slate-500">建档时间:</span>
+                        <span className="text-slate-500">Created:</span>
                         <span className="col-span-2 text-slate-900">{new Date(selectedPatient.created_at).toLocaleDateString()}</span>
                       </div>
                       <div className="pt-2 border-t border-slate-100">
-                        <span className="block text-slate-500 mb-1">基础病情:</span>
+                        <span className="block text-slate-500 mb-1">Condition:</span>
                         <div className="bg-red-50 text-red-700 p-2 rounded border border-red-100">
-                          {selectedPatient.condition || '—'}
+                          {selectedPatient.condition || '-'}
                         </div>
                       </div>
                     </div>
@@ -436,10 +443,10 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
 
               {activeTab === 'memories' && (
                 <div className="space-y-3">
-                  <h4 className="font-bold text-slate-700 text-sm">最近记忆 (RAG)</h4>
+                  <h4 className="font-bold text-slate-700 text-sm">Recent memories (RAG)</h4>
                   {memories.length === 0 ? (
                     <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-                      暂无记忆记录
+                      No memory records yet
                     </div>
                   ) : (
                     memories.map((m) => (
@@ -456,7 +463,7 @@ export default function DoctorPortal({ initialItems }: { initialItems: DoctorPor
               )}
             </>
           ) : (
-            <div className="text-sm text-slate-500 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">等待会话</div>
+            <div className="text-sm text-slate-500 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">Waiting for a consultation</div>
           )}
         </div>
       </div>

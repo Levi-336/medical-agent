@@ -6,7 +6,7 @@ import type { Patient, ChatMessage } from '@/app/actions';
 import { processUserMessage } from '@/app/actions';
 import VoiceInput from './VoiceInput';
 import doctorAvatar from '@/app/character-7166558_1280.png';
-import cn from 'classnames'; // 添加此行以导入 cn 函数
+import cn from 'classnames';
 
 const iconThinStyle: React.CSSProperties = {
   fontVariationSettings: "'wght' 300, 'FILL' 0, 'GRAD' 0, 'opsz' 24",
@@ -35,25 +35,25 @@ function parseHistoryItem(h: ChatMessage): UiMessage {
 
 function formatAiQuestions(content: string) {
   return content
-    .replace(/([?？])(?!\s*\n)/g, '$1\n')
+    .replace(/([?.!])(?!\s*\n)/g, '$1\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
 function formatPatientVisibleContent(role: UiMessage['role'], content: string) {
   const trimmed = content.trim();
-  if (/^【(医生|医生助理|AI自动回复)】/.test(trimmed)) return content;
+  if (/^\[(Doctor|Assistant|AI Auto Reply)\]/.test(trimmed)) return content;
 
   if (role === 'assistant') {
     const c = formatAiQuestions(content);
-    return `【医生助理】 ${c}\n（AI生成内容，仅供参考，请注意甄别）`;
+    return `[Assistant] ${c}\n(AI-generated content for reference only)`;
   }
   if (role === 'ai') {
     const c = formatAiQuestions(content);
-    return `【AI自动回复】 ${c}\n（AI生成内容，仅供参考，请注意甄别）`;
+    return `[AI Auto Reply] ${c}\n(AI-generated content for reference only)`;
   }
   if (role === 'doctor') {
-    return `【医生】 ${content}`;
+    return `[Doctor] ${content}`;
   }
   return content;
 }
@@ -62,7 +62,7 @@ function formatChatTime(isoLike?: string): string {
   if (!isoLike) return '';
   const d = new Date(isoLike.replace(' ', 'T'));
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
 function renderContentWithPayLink(content: string) {
@@ -85,7 +85,7 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const doctorDisplayName = process.env.NEXT_PUBLIC_DOCTOR_NAME || '张医生';
+  const doctorDisplayName = process.env.NEXT_PUBLIC_DOCTOR_NAME || 'Dr. Zhang';
   const doctorAvatarSrc = (doctorAvatar as unknown as { src?: string }).src || (doctorAvatar as unknown as string);
 
   useEffect(() => {
@@ -98,7 +98,7 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
     }
   }, [messages, loading]);
 
-  const patientAvatarText = useMemo(() => patient.name?.slice(0, 1) || '患', [patient.name]);
+  const patientAvatarText = useMemo(() => patient.name?.slice(0, 1) || 'P', [patient.name]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +125,7 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
       }
     } catch (err) {
       console.error(err);
-      alert('发送失败');
+      alert('Failed to send message.');
     } finally {
       setLoading(false);
     }
@@ -136,13 +136,13 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
       <div className="h-[44px] w-full bg-[#202c33] sticky top-0 z-20 shrink-0 flex items-center justify-center">
         <div className="w-[134px] h-[20px] bg-black rounded-full"></div>
       </div>
-      
+
       <header className="z-20 flex h-16 w-full items-center justify-between bg-[#202c33] px-4 border-b border-[#313d44]">
         <div className="flex items-center w-[50px]">
           <Link
             href="/patient"
             className="flex items-center text-[#8696a0] hover:text-white transition-colors p-1"
-            aria-label="返回"
+            aria-label="Back"
           >
             <span className="material-symbols-outlined !text-[24px] leading-none" style={iconThinStyle}>
               arrow_back
@@ -151,18 +151,18 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
         </div>
         <div className="flex-1 flex items-center justify-center gap-3">
           <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-white">
-            <img src={doctorAvatarSrc} alt="医生头像" className="h-full w-full object-cover" draggable={false} />
+            <img src={doctorAvatarSrc} alt="Doctor avatar" className="h-full w-full object-cover" draggable={false} />
           </div>
           <div className="text-center">
             <h1 className="text-[16px] font-medium text-[#e9edef]">{doctorDisplayName}</h1>
-            <p className="text-[12px] text-[#8696a0]">在线</p>
+            <p className="text-[12px] text-[#8696a0]">Online</p>
           </div>
         </div>
         <div className="flex items-center justify-end w-[50px]">
           <button
             type="button"
             className="flex items-center justify-center text-[#8696a0] hover:text-white transition-colors p-1"
-            aria-label="更多"
+            aria-label="More"
           >
             <span className="material-symbols-outlined !text-[24px] leading-none" style={iconThinStyle}>
               more_vert
@@ -183,8 +183,8 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
             <div className="mb-4">
               <span className="material-symbols-outlined !text-[64px] text-[#54656f]">chat_bubble_outline</span>
             </div>
-            <p className="text-[16px]">开始与医生对话</p>
-            <p className="text-[13px] text-[#667781]">发送消息开始咨询</p>
+            <p className="text-[16px]">Start chatting with the doctor</p>
+            <p className="text-[13px] text-[#667781]">Send a message to begin the consultation</p>
           </div>
         ) : (
           messages.map((msg) => {
@@ -195,7 +195,7 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
               <div key={msg.id} className={cn('flex items-start gap-3', isUser ? 'justify-end' : 'justify-start')}>
                 {!isUser && (
                   <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full shadow-sm bg-white">
-                    <img src={doctorAvatarSrc} alt="医生头像" className="h-full w-full object-cover" draggable={false} />
+                    <img src={doctorAvatarSrc} alt="Doctor avatar" className="h-full w-full object-cover" draggable={false} />
                   </div>
                 )}
 
@@ -211,7 +211,6 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
                     <div className="whitespace-pre-wrap">
                       {renderContentWithPayLink(formatPatientVisibleContent(msg.role, msg.content))}
                     </div>
-                    {/* Message status indicator for user messages */}
                     {isUser && (
                       <div className="flex items-center justify-end mt-1">
                         <span className="text-xs text-[#8ce8c7] mr-1">{timeText}</span>
@@ -237,7 +236,7 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
         {loading && (
           <div className="flex items-start gap-3">
             <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full shadow-sm bg-white">
-              <img src={doctorAvatarSrc} alt="医生头像" className="h-full w-full object-cover" draggable={false} />
+              <img src={doctorAvatarSrc} alt="Doctor avatar" className="h-full w-full object-cover" draggable={false} />
             </div>
             <div className="flex max-w-[70%] flex-col gap-1">
               <div className="bg-[#202c33] p-4 rounded-2xl rounded-bl-md shadow-sm">
@@ -247,7 +246,7 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
                   <span className="w-2 h-2 bg-[#00d95f] rounded-full animate-bounce delay-150"></span>
                 </div>
               </div>
-              <span className="text-xs text-[#8696a0] ml-2">正在输入...</span>
+              <span className="text-xs text-[#8696a0] ml-2">Typing...</span>
             </div>
           </div>
         )}
@@ -258,31 +257,31 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 1rem)' }}
       >
         <form onSubmit={handleSend} className="flex items-center gap-3">
-          <VoiceInput 
-                onTextRecognized={(text) => {
-                    setInput((prev) => prev ? prev + text : text);
-                }} 
-            />
+          <VoiceInput
+            onTextRecognized={(text) => {
+              setInput((prev) => prev ? `${prev}${text}` : text);
+            }}
+          />
 
           <div className="flex flex-1 items-center rounded-full bg-[#2a3942] px-4 py-2.5 min-h-[44px]">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="消息"
+              placeholder="Message"
               className="w-full bg-transparent p-0 text-[16px] text-[#e9edef] placeholder-[#8696a0] focus:outline-none border-none h-5 leading-5"
               disabled={loading}
             />
             <button
               type="button"
               className="ml-2 p-1 text-[#8696a0] hover:text-[#e9edef] transition-colors"
-              aria-label="表情"
+              aria-label="Emoji"
             >
               <span className="material-symbols-outlined !text-[20px]">sentiment_satisfied</span>
             </button>
             <button
               type="button"
               className="ml-1 p-1 text-[#8696a0] hover:text-[#e9edef] transition-colors"
-              aria-label="附件"
+              aria-label="Attachment"
             >
               <span className="material-symbols-outlined !text-[20px]">attach_file</span>
             </button>
@@ -292,7 +291,7 @@ export default function PatientWeChatChat({ patient, initialHistory }: PatientWe
             type="submit"
             disabled={loading || !input.trim()}
             className="h-11 w-11 shrink-0 rounded-full bg-[#00d95f] text-white flex items-center justify-center disabled:opacity-60 disabled:bg-[#8696a0] transition-all shadow-sm"
-            aria-label="发送"
+            aria-label="Send"
           >
             <span className="material-symbols-outlined !text-[20px]">send</span>
           </button>

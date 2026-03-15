@@ -18,10 +18,6 @@ const tabIconActiveStyle: React.CSSProperties = {
   fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24",
 };
 
-const avatarIconStyle: React.CSSProperties = {
-  fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24",
-};
-
 type TabKey = 'wechat' | 'contacts' | 'discover' | 'me';
 
 function formatListTime(isoLike: string | null): string {
@@ -36,13 +32,13 @@ function formatListTime(isoLike: string | null): string {
     d.getDate() === now.getDate();
 
   if (sameDay) {
-    return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   }
-  return d.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' });
+  return d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
 }
 
 function formatPreview(content: string | null): string {
-  if (!content) return '暂无消息';
+  if (!content) return 'No messages yet';
   return content
     .replace(/^User:\s*/i, '')
     .replace(/^AI:\s*/i, '')
@@ -51,7 +47,7 @@ function formatPreview(content: string | null): string {
 }
 
 function formatPreviewFromRow(row: LastDialogueMessage | null): string {
-  if (!row) return '暂无消息';
+  if (!row) return 'No messages yet';
   return formatPreview(row.content);
 }
 
@@ -66,7 +62,7 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
   const [lastMsg, setLastMsg] = useState<LastDialogueMessage | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const doctorDisplayName = process.env.NEXT_PUBLIC_DOCTOR_NAME || '张医生';
+  const doctorDisplayName = process.env.NEXT_PUBLIC_DOCTOR_NAME || 'Dr. Zhang';
   const doctorAvatarSrc = (doctorAvatar as unknown as { src?: string }).src || (doctorAvatar as unknown as string);
 
   useEffect(() => {
@@ -108,14 +104,13 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
       avatarIcon?: string;
       avatarIconSize?: number;
       avatarBg: string;
-      muted?: boolean;
     }> = [
       {
         key: 'filehelper',
         href: '/patient/fake/filehelper',
-        title: '文件传输助手',
-        time: '昨天',
-        preview: '欢迎使用文件传输助手',
+        title: 'File Transfer Assistant',
+        time: 'Yesterday',
+        preview: 'Welcome to File Transfer Assistant',
         avatarIcon: 'folder',
         avatarIconSize: 30,
         avatarBg: '#07c160',
@@ -123,9 +118,9 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
       {
         key: 'official',
         href: '/patient/fake/official',
-        title: '订阅号消息',
-        time: '上周',
-        preview: '今日要闻：AI 医疗应用加速落地…',
+        title: 'Official Account Updates',
+        time: 'Last week',
+        preview: 'Today’s headline: AI healthcare applications are accelerating...',
         avatarIcon: 'rss_feed',
         avatarIconSize: 32,
         avatarBg: '#2e62d9',
@@ -133,9 +128,9 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
       {
         key: 'wechatpay',
         href: '/patient/fake/wechatpay',
-        title: '微信支付',
-        time: '1个月前',
-        preview: '微信支付凭证',
+        title: 'WeChat Pay',
+        time: '1 month ago',
+        preview: 'WeChat Pay receipt',
         avatarIcon: 'payments',
         avatarIconSize: 28,
         avatarBg: '#fa9d3b',
@@ -158,7 +153,7 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
 
   const filteredWechatItems = useMemo(() => {
     if (!searchQuery.trim()) return wechatItems;
-    return wechatItems.filter(item => 
+    return wechatItems.filter(item =>
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.preview.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -178,34 +173,32 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
 
         <header className="bg-[#202c33] sticky top-[44px] z-20 px-4 py-3 border-b border-[#313d44]">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-[20px] font-semibold text-white">
-              微信
-            </h1>
+            <h1 className="text-[20px] font-semibold text-white">WeChat</h1>
             <div className="flex items-center gap-4">
               <button
                 type="button"
                 className="text-[#8696a0] hover:text-white transition-colors p-1"
-                aria-label="搜索"
+                aria-label="Search"
               >
                 <span className="material-symbols-outlined !text-[22px] leading-none">search</span>
               </button>
               <button
                 type="button"
                 className="text-[#8696a0] hover:text-white transition-colors p-1"
-                aria-label="添加"
+                aria-label="Add"
               >
                 <span className="material-symbols-outlined !text-[22px] leading-none">add</span>
               </button>
               <button
                 type="button"
                 className="text-[#8696a0] hover:text-white transition-colors p-1"
-                aria-label="更多"
+                aria-label="More"
               >
                 <span className="material-symbols-outlined !text-[22px] leading-none">more_vert</span>
               </button>
             </div>
           </div>
-          
+
           <div className="relative">
             <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
               <span className="material-symbols-outlined text-[#8696a0] !text-[18px]">search</span>
@@ -214,7 +207,7 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="搜索"
+              placeholder="Search"
               className="w-full bg-[#2a3942] text-white placeholder-[#8696a0] rounded-lg pl-10 pr-4 py-2 text-[15px] focus:outline-none focus:bg-[#3b4a54] transition-colors"
             />
           </div>
@@ -228,8 +221,8 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
                   <div className="mb-2">
                     <span className="material-symbols-outlined !text-[48px] text-[#54656f]">chat_bubble_outline</span>
                   </div>
-                  <p className="text-[#8696a0]">暂无对话</p>
-                  <p className="text-[13px] text-[#667781] mt-1">开始与医生的对话吧</p>
+                  <p className="text-[#8696a0]">No conversations yet</p>
+                  <p className="text-[13px] text-[#667781] mt-1">Start a conversation with the doctor</p>
                 </div>
               ) : (
                 filteredWechatItems.map((item) => (
@@ -241,10 +234,10 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
                     <div className="relative">
                       {item.avatarKind === 'doctorPhoto' ? (
                         <div className="h-[49px] w-[49px] shrink-0 overflow-hidden rounded-full bg-white">
-                          <img 
-                            src={doctorAvatarSrc} 
-                            alt="医生头像" 
-                            className="h-full w-full object-cover" 
+                          <img
+                            src={doctorAvatarSrc}
+                            alt="Doctor avatar"
+                            className="h-full w-full object-cover"
                           />
                         </div>
                       ) : (
@@ -272,17 +265,11 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
                     </div>
                     <div className="flex-1 min-w-0 border-b border-[#313d44] group-last:border-b-0 pb-3">
                       <div className="flex justify-between items-start mb-1">
-                        <h2 className="text-[16px] font-normal text-[#e9edef] truncate pr-2">
-                          {item.title}
-                        </h2>
-                        <span className="text-[12px] text-[#8696a0] flex-shrink-0">
-                          {item.time}
-                        </span>
+                        <h2 className="text-[16px] font-normal text-[#e9edef] truncate pr-2">{item.title}</h2>
+                        <span className="text-[12px] text-[#8696a0] flex-shrink-0">{item.time}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <p className="text-[14px] text-[#8696a0] truncate pr-2 flex-1">
-                          {item.preview}
-                        </p>
+                        <p className="text-[14px] text-[#8696a0] truncate pr-2 flex-1">{item.preview}</p>
                         {item.key.includes('doctor') && (
                           <div className="flex-shrink-0">
                             <div className="w-5 h-5 bg-[#25d366] rounded-full flex items-center justify-center ml-2">
@@ -304,8 +291,8 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
               <div className="mb-4">
                 <span className="material-symbols-outlined !text-[48px] text-[#54656f]">group</span>
               </div>
-              <p>通讯录</p>
-              <p className="text-[13px] text-[#667781] mt-1">功能开发中</p>
+              <p>Contacts</p>
+              <p className="text-[13px] text-[#667781] mt-1">Feature in progress</p>
             </div>
           )}
           {activeTab === 'discover' && (
@@ -313,31 +300,38 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
               <div className="mb-4">
                 <span className="material-symbols-outlined !text-[48px] text-[#54656f]">explore</span>
               </div>
-              <p>发现</p>
-              <p className="text-[13px] text-[#667781] mt-1">功能开发中</p>
+              <p>Discover</p>
+              <p className="text-[13px] text-[#667781] mt-1">Feature in progress</p>
             </div>
           )}
           {activeTab === 'me' && (
             <div className="p-6 space-y-6">
               <div className="flex items-center gap-4 p-4 bg-[#202c33] rounded-lg">
                 <div className="h-16 w-16 bg-[#25d366] rounded-full flex items-center justify-center text-white text-xl font-semibold">
-                  患
+                  P
                 </div>
                 <div>
-                  <h3 className="text-[#e9edef] text-[17px] font-medium">患者</h3>
-                  <p className="text-[#8696a0] text-[14px]">微信号: patient_demo</p>
+                  <h3 className="text-[#e9edef] text-[17px] font-medium">Patient</h3>
+                  <p className="text-[#8696a0] text-[14px]">WeChat ID: patient_demo</p>
                 </div>
               </div>
-              
+
               <div className="space-y-1">
                 <button className="w-full flex items-center gap-3 p-3 hover:bg-[#202c33] rounded-lg transition-colors text-left">
                   <span className="material-symbols-outlined text-[#8696a0] !text-[22px]">settings</span>
-                  <span className="text-[#e9edef] text-[16px]">设置</span>
+                  <span className="text-[#e9edef] text-[16px]">Settings</span>
                 </button>
                 <button className="w-full flex items-center gap-3 p-3 hover:bg-[#202c33] rounded-lg transition-colors text-left">
                   <span className="material-symbols-outlined text-[#8696a0] !text-[22px]">support</span>
-                  <span className="text-[#e9edef] text-[16px]">帮助与反馈</span>
+                  <span className="text-[#e9edef] text-[16px]">Help and feedback</span>
                 </button>
+                <Link
+                  href="/"
+                  className="block w-full flex items-center gap-3 p-3 hover:bg-[#202c33] rounded-lg transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[#8696a0] !text-[22px]">home</span>
+                  <span className="text-[#e9edef] text-[16px]">Back to home</span>
+                </Link>
               </div>
             </div>
           )}
@@ -349,20 +343,18 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
             onClick={() => setActiveTab('wechat')}
             className="flex flex-col items-center justify-center gap-1 min-w-[64px] py-2"
           >
-            <div className="relative">
-              <span
-                className={`material-symbols-outlined !text-[25px] leading-none transition-colors ${
-                  activeTab === 'wechat' ? 'text-[#00d95f]' : 'text-[#8696a0]'
-                }`}
-                style={activeTab === 'wechat' ? tabIconActiveStyle : tabIconBaseStyle}
-              >
-                chat_bubble
-              </span>
-            </div>
+            <span
+              className={`material-symbols-outlined !text-[25px] leading-none transition-colors ${
+                activeTab === 'wechat' ? 'text-[#00d95f]' : 'text-[#8696a0]'
+              }`}
+              style={activeTab === 'wechat' ? tabIconActiveStyle : tabIconBaseStyle}
+            >
+              chat_bubble
+            </span>
             <span className={`text-[11px] font-normal transition-colors ${
               activeTab === 'wechat' ? 'text-[#00d95f]' : 'text-[#8696a0]'
             }`}>
-              微信
+              WeChat
             </span>
           </button>
           <button
@@ -381,7 +373,7 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
             <span className={`text-[11px] font-normal transition-colors ${
               activeTab === 'contacts' ? 'text-[#00d95f]' : 'text-[#8696a0]'
             }`}>
-              通讯录
+              Contacts
             </span>
           </button>
           <button
@@ -389,20 +381,18 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
             onClick={() => setActiveTab('discover')}
             className="flex flex-col items-center justify-center gap-1 min-w-[64px] py-2"
           >
-            <div className="relative">
-              <span
-                className={`material-symbols-outlined !text-[25px] leading-none transition-colors ${
-                  activeTab === 'discover' ? 'text-[#00d95f]' : 'text-[#8696a0]'
-                }`}
-                style={activeTab === 'discover' ? tabIconActiveStyle : tabIconBaseStyle}
-              >
-                explore
-              </span>
-            </div>
+            <span
+              className={`material-symbols-outlined !text-[25px] leading-none transition-colors ${
+                activeTab === 'discover' ? 'text-[#00d95f]' : 'text-[#8696a0]'
+              }`}
+              style={activeTab === 'discover' ? tabIconActiveStyle : tabIconBaseStyle}
+            >
+              explore
+            </span>
             <span className={`text-[11px] font-normal transition-colors ${
               activeTab === 'discover' ? 'text-[#00d95f]' : 'text-[#8696a0]'
             }`}>
-              发现
+              Discover
             </span>
           </button>
           <button
@@ -421,7 +411,7 @@ export default function PatientInbox({ patients }: PatientInboxProps) {
             <span className={`text-[11px] font-normal transition-colors ${
               activeTab === 'me' ? 'text-[#00d95f]' : 'text-[#8696a0]'
             }`}>
-              我
+              Me
             </span>
           </button>
         </nav>
